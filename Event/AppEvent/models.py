@@ -55,7 +55,7 @@ class Event(BaseModel):
     location = models.CharField(max_length=255, null=False)
     ticket_quantity = models.IntegerField(default=0)
 
-    category_id = models.ForeignKey(Category, null=False, on_delete=models.RESTRICT)
+    category = models.ForeignKey(Category, null=False, on_delete=models.RESTRICT)
 
     def __str__(self):
         return self.title
@@ -145,9 +145,9 @@ class Payment(BaseModel):
 
 
 class PaymentTicket(models.Model):
-    user_id = models.ForeignKey(User, null=False, on_delete=models.RESTRICT)
-    ticket_id = models.ForeignKey(Ticket, null=False, on_delete=models.RESTRICT)
-    payment_id = models.ForeignKey(Payment, null=False, on_delete=models.RESTRICT)
+    user = models.ForeignKey(User, null=False, on_delete=models.RESTRICT)
+    ticket = models.ForeignKey(Ticket, null=False, on_delete=models.RESTRICT)
+    payment = models.ForeignKey(Payment, null=False, on_delete=models.RESTRICT)
 
     class Meta:
         unique_together = ('user_id', 'ticket_id', 'payment_id')
