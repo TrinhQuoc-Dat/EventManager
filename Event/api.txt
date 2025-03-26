@@ -1,0 +1,27 @@
+# 1. Đăng ký & Đăng nhập
+@app.route('/api/auth/register', methods=['POST'])  # Đăng ký tài khoản
+@app.route('/api/auth/login', methods=['POST'])  # Đăng nhập
+@app.route('/api/auth/logout', methods=['POST'])  # Đăng xuất
+
+# 2. Quản lý sự kiện
+@app.route('/api/events', methods=['POST'])  # Tạo sự kiện
+@app.route('/api/events', methods=['GET'])  # Lấy danh sách sự kiện
+@app.route('/api/events/<event_id>', methods=['GET'])  # Lấy chi tiết sự kiện
+@app.route('/api/events/<event_id>', methods=['PUT'])  # Cập nhật sự kiện
+@app.route('/api/events/<event_id>', methods=['DELETE'])  # Xóa sự kiện
+
+# 3. Đặt vé
+@app.route('/api/tickets/book', methods=['POST'])  # Đặt vé
+@app.route('/api/tickets/<ticket_id>', methods=['GET'])  # Xem vé
+@app.route('/api/tickets/<ticket_id>/cancel', methods=['POST'])  # Hủy vé
+
+# 4. Check-in bằng mã QR
+@app.route('/api/tickets/<ticket_id>/checkin', methods=['POST'])  # Check-in QR
+
+# 5. Thông báo
+@app.route('/api/notifications', methods=['GET'])  # Lấy danh sách thông báo
+@app.route('/api/notifications/<user_id>', methods=['POST'])  # Gửi thông báo
+
+# 6. Đánh giá sự kiện
+@app.route('/api/events/<event_id>/reviews', methods=['POST'])  # Viết đánh giá
+@app.route('/api/events/<event_id>/reviews', methods=['GET'])  # Xem đánh giá
