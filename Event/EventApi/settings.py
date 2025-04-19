@@ -88,7 +88,7 @@ REST_FRAMEWORK = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -117,7 +117,7 @@ DATABASES = {
     }
 }
 
-# AUTH_USER_MODEL = 'AppEvent.User'
+AUTH_USER_MODEL = 'AppEvent.User'
 
 
 import pymysql
@@ -165,12 +165,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / "AppEvent/static"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MOMO_PARTNER_CODE = 'MOMO'
+MOMO_ACCESS_KEY = 'F8BBA842ECF85'
+MOMO_SECRET_KEY = 'K951B6PE1waDMi640xX08PD3vg6EkVlz'
+
+DOMAIN = "http://localhost:8000"
 
 
 CLIENT_ID = "ULECp6fQAOnJYAd048LPqoMC7TRgv5LRYOQXusBY"

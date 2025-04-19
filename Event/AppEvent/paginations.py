@@ -14,3 +14,17 @@ class EventSetPagination(pagination.PageNumberPagination):
             'count': self.page.paginator.count,
             'results': data
         })
+
+
+class PaymentTicketSetPagination(pagination.PageNumberPagination):
+    page_size = 8
+
+    def get_paginated_response(self, data):
+        return Response({
+            'link': {
+                'next': self.get_next_link(),
+                'previous': self.get_previous_link(),
+            },
+            'count': self.page.paginator.count,
+            'results': data
+        })
