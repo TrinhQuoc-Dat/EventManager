@@ -4,7 +4,7 @@ from rest_framework import viewsets, generics, permissions, mixins, status, pars
 from django.contrib.auth import authenticate
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Category, Event, Comment, Ticket, User, PaymentTicket, Payment, StatusPayment,TypePayment, StatusTicket,StatusNotification
+from .models import Category, Event, Comment, Ticket, User, PaymentTicket, Payment, StatusPayment,TypePayment, StatusTicket,StatusNotification, TicketType
 from AppEvent import dao, serializers, paginations, perms
 from django.shortcuts import redirect
 from AppEvent.payment import create_momo_payment
@@ -36,9 +36,9 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = dao.get_user()
     serializer_class = serializers.UserSerializer
     parser_classes = [parsers.MultiPartParser]
-    permission_classes = [perms.UserPermission]
+    permission_classes = [permissions.IsAuthenticated]
 
-    @action(methods=['get'], url_name='current_user', detail=False)
+    @action(methods=['get'], url_name='current_user', detail=False, permission_classes = [perms.UserPermission])
     def current_user(self, request):
         user = request.user
         if user.is_anonymous:
@@ -46,7 +46,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
 
         return Response(serializers.UserSerializer(request.user).data)
 
-    @action(methods=['post'], url_name='logout', detail=False)
+    @action(methods=['post'], url_name='logout', detail=False, permission_classes = [perms.UserPermission])
     def logout(self, request):
         if request.auth:
             request.auth.delete()
@@ -144,6 +144,11 @@ class TicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.CreateA
     permission_classes = [perms.OwnerAuthenticated]
     pagination_class = paginations.EventSetPagination
     serializer_class = serializers.TicketSerializer
+
+
+class TicketTypeViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset = TicketType.objects.filter(active=True)
+    serializer_class = serializers.TicketTypeSerializer
 
 
 class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
@@ -282,7 +287,7 @@ def google_auth(request):
         return Response({'error': 'Token in valid'}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        idinfo = id_token.verify_oauth2_token(token, requests.Request(), settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY)
+        idinfo = id_token.verify_oauth2_token(token, Request())
 
         print(idinfo)
 
