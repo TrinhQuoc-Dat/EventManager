@@ -12,7 +12,7 @@ class CategorySerializer(ModelSerializer):
 class UserSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'username', 'password', 'email', 'avatar']
+        fields = ['first_name', 'last_name', 'username', 'password', 'email', 'avatar', 'role']
         extra_kwargs = {
             'password': {
                 'write_only': True
@@ -21,7 +21,6 @@ class UserSerializer(ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-
         data['avatar'] = instance.avatar.url if instance.avatar else ''
         return data
 
@@ -46,10 +45,12 @@ class TicketSerializer(ModelSerializer):
         model = Ticket
         fields = "__all__"
 
+
 class TicketTypeSerializer(ModelSerializer):
     class Meta:
         model = TicketType
         fields = "__all__"
+
 
 class PaymentTicketFullSerializer(ModelSerializer):
     ticket = serializers.SerializerMethodField()
@@ -64,6 +65,7 @@ class PaymentTicketFullSerializer(ModelSerializer):
             'id': obj.ticket.id,
             'type_ticket': obj.ticket.type_ticket,
             'price': obj.ticket.price,
+            'content': obj.ticket.content,
             'event': obj.ticket.event.title
         }
 

@@ -42,7 +42,6 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=UserRole.choices, default=UserRole.PARTICIPANT)
     objects = CustomUserManager()
 
-
     groups = models.ManyToManyField(
         'auth.Group',
         related_name='app_event_users',
@@ -136,14 +135,6 @@ class StatusTicket(models.TextChoices):
         return self.name
 
 
-# class TypeTicket(models.TextChoices):
-#     VIP = 'vip'
-#     NORMAL = 'normal'
-
-#     def __str__(self):
-#         return self.name
-
-
 class TicketType(BaseModel):
     name = models.CharField(max_length=50, null=False)
     ticket_price = models.DecimalField(default=0, null=False, max_digits=10, decimal_places=2)
@@ -152,6 +143,7 @@ class TicketType(BaseModel):
 
     def __str__(self):
         return self.name
+
 
 class Ticket(BaseModel):
     content = models.CharField(max_length=255, null=False)

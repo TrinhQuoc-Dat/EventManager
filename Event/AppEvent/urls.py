@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework import routers
 from AppEvent import views
 from AppEvent.views import MomoPaymentIPNView, payment_success_view
+from .views import google_auth
 
 
 router = routers.DefaultRouter()
@@ -14,7 +15,9 @@ router.register('payment', views.PaymentViesSet, basename='payment')
 
 urlpatterns = [
     path('api/', include(router.urls)),
+    path('api/auth/google/', google_auth),
     path('ticket/payment-ipn/', MomoPaymentIPNView.post, name='momo-ipn'),
     path('ticket/payment-success/', payment_success_view, name='payment-success'),
-    path('checkin/<int:payment_ticket_id>/', views.checkin_api, name='checkin')
+    path('checkin/<int:payment_ticket_id>/', views.checkin_api, name='checkin'),
+    path('', views.home, name='home'),
 ]
