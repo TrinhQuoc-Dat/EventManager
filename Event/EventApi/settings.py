@@ -85,6 +85,8 @@ REST_FRAMEWORK = {
     )
 }
 
+OAUTH2_PROVIDER = { 'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore' }
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -112,7 +114,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'eventdb',
         'USER': 'root',
-        'PASSWORD': 'Admin@123',
+        'PASSWORD': 'Abc@123',
         'HOST': ''
     }
 }
@@ -179,5 +181,8 @@ MOMO_SECRET_KEY = 'K951B6PE1waDMi640xX08PD3vg6EkVlz'
 DOMAIN = "http://localhost:8000"
 
 
-CLIENT_ID = "ULECp6fQAOnJYAd048LPqoMC7TRgv5LRYOQXusBY"
-CLIENT_SECRET = "RNFQT7dbxzkO6GQ2vjkluBOiXkogSsM3odmxR1wpxJNybStvj7RI4Kg03n8OQaW2l9UbMWPRbwXTB6lmXeMEpEhNOIcXSmQtUvwOHUqlm5KsUvm0qCM8DaHQiWbt2PGF"
+# CLIENT_ID = "ULECp6fQAOnJYAd048LPqoMC7TRgv5LRYOQXusBY"
+# CLIENT_SECRET = "RNFQT7dbxzkO6GQ2vjkluBOiXkogSsM3odmxR1wpxJNybStvj7RI4Kg03n8OQaW2l9UbMWPRbwXTB6lmXeMEpEhNOIcXSmQtUvwOHUqlm5KsUvm0qCM8DaHQiWbt2PGF"
+
+CLIENT_ID = "AqXUqoa68insca0NltNk8zfUR9sAQeTMNAmn7Kmc"
+CLIENT_SECRET = "6p7Wp9nKoe9Gqg6gOPxsAV8CIrZB0FddYOtrJOvOzwK7qttBLKf44LlgSzpYo23tpq8HjnSMYu7tOKKZUm2HAN5HrxOto4R2ZAtdlJFIkzX1k7isEd5uv6CINjRQyU1d"

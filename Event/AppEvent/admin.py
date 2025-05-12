@@ -52,7 +52,7 @@ class GroupAdmin(admin.ModelAdmin):
 
 
 class EventAdmin(admin.ModelAdmin):
-    list_display = ['title', 'description', 'created_date', 'date_time', 'location', 'ticket_quantity', 'view_dashboard']
+    list_display = ['title', 'description', 'created_date', 'date_time', 'location', 'view_dashboard']
     search_fields = ['name', 'category']
     list_filter = ['category', 'created_date']
     ordering = ['-id']

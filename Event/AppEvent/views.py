@@ -3,7 +3,7 @@ import hmac
 from rest_framework import viewsets, generics, permissions, mixins, status, parsers
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Category, Event, Comment, Ticket, User, PaymentTicket, Payment, StatusPayment,TypePayment, StatusTicket,StatusNotification
+from .models import Category, Event, Comment, Ticket, User, PaymentTicket, Payment, StatusPayment,TypePayment, StatusTicket,StatusNotification, TicketType
 from AppEvent import dao, serializers, paginations, perms
 from django.shortcuts import redirect
 from AppEvent.payment import create_momo_payment
@@ -28,13 +28,13 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
     queryset = dao.get_user()
     serializer_class = serializers.UserSerializer
     parser_classes = [parsers.MultiPartParser]
-    permission_classes = [perms.UserPermission]
+    permission_classes = [permissions.IsAuthenticated]
 
-    @action(methods=['get'], url_name='current_user', detail=False)
+    @action(methods=['get'], url_name='current_user', detail=False, permission_classes = [perms.UserPermission])
     def current_user(self, request):
         return Response(serializers.UserSerializer(request.user).data)
 
-    @action(methods=['post'], url_name='logout', detail=False)
+    @action(methods=['post'], url_name='logout', detail=False, permission_classes = [perms.UserPermission])
     def logout(self, request):
         if request.auth:
             request.auth.delete()
@@ -60,6 +60,9 @@ class TicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.CreateA
     pagination_class = paginations.EventSetPagination
     serializer_class = serializers.TicketSerializer
 
+class TicketTypeViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset = TicketType.objects.filter(active=True)
+    serializer_class = serializers.TicketTypeSerializer
 
 class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
     queryset = dao.get_payment_ticket()

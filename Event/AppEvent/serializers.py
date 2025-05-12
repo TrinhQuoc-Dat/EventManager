@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
-from .models import Category, User, Event, Ticket, Payment, PaymentTicket
 from rest_framework import serializers
+from .models import Category, User, Event, Ticket, Payment, PaymentTicket, TicketType
 
 
 class CategorySerializer(ModelSerializer):
@@ -19,6 +19,12 @@ class UserSerializer(ModelSerializer):
             }
         }
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        data['avatar'] = instance.avatar.url if instance.avatar else ''
+        return data
+
     def create(self, validated_data):
         data = validated_data.copy()
 
@@ -36,11 +42,14 @@ class EventSerializer(ModelSerializer):
 
 
 class TicketSerializer(ModelSerializer):
-
     class Meta:
         model = Ticket
         fields = "__all__"
 
+class TicketTypeSerializer(ModelSerializer):
+    class Meta:
+        model = TicketType
+        fields = "__all__"
 
 class PaymentTicketFullSerializer(ModelSerializer):
     ticket = serializers.SerializerMethodField()
@@ -82,4 +91,3 @@ class PaymentSerializer(ModelSerializer):
     class Meta:
         model = Payment
         fields = "__all__"
-

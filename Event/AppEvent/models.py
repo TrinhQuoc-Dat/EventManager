@@ -78,9 +78,11 @@ class Event(BaseModel):
     date_time = models.DateTimeField()
     image = CloudinaryField(null=False)
     location = models.CharField(max_length=255, null=False)
-    ticket_quantity = models.IntegerField(default=0)
+    kinh_do = models.FloatField(null=True, blank=True)
+    vi_do = models.FloatField(null=True, blank=True)
 
     category = models.ForeignKey(Category, null=False, on_delete=models.RESTRICT)
+    organizer = models.ForeignKey(User, null=False, on_delete=models.CASCADE, related_name='events')
 
     def __str__(self):
         return self.title
@@ -134,18 +136,26 @@ class StatusTicket(models.TextChoices):
         return self.name
 
 
-class TypeTicket(models.TextChoices):
-    VIP = 'vip'
-    NORMAL = 'normal'
+# class TypeTicket(models.TextChoices):
+#     VIP = 'vip'
+#     NORMAL = 'normal'
+
+#     def __str__(self):
+#         return self.name
+
+
+class TicketType(BaseModel):
+    name = models.CharField(max_length=50, null=False)
+    ticket_price = models.DecimalField(default=0, null=False, max_digits=10, decimal_places=2)
+    so_luong = models.IntegerField(null=False, default=0)
+    event = models.ForeignKey(Event, null=False, on_delete=models.RESTRICT, related_name='ticket_types')
 
     def __str__(self):
         return self.name
 
-
 class Ticket(BaseModel):
     content = models.CharField(max_length=255, null=False)
-    type_ticket = models.CharField(max_length=20, null=False, default=TypeTicket.NORMAL)
-    event = models.ForeignKey(Event, null=False, on_delete=models.RESTRICT)
+    ticket_type = models.ForeignKey(TicketType, null=False, on_delete=models.RESTRICT)
 
 
 class TypePayment(models.TextChoices):
