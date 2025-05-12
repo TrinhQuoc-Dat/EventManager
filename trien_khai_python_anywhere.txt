@@ -1,0 +1,50 @@
+1. vào consoles
++ đưa tập tin vào python anywhere
++ tạo ra 1 cái bash -> git clone project từ github về
++ tạo môi trường ảo
+-> pwd
+-> cd .virtualenvs/
+-> virtualenvs --python=/urs/bin/python3.9 rest_venv
++ kích hoạt môi trường ảo
+-> source rest_venv/bin/activate
++ cài thư viện trong requirement.txt
+-> cd vào requirement
+-> pip install -r requirements.txt
+
+
+2. tạo cơ sở dữ liệu
+-> tap database
+-> đặt mật khẩu (Admin@123)
+-> tạo cơ sở dữ liệu
+-> sửa lại tên cơ sở dữ liệu, password, name, host trong setting.py
+
+3. qua bên bash ecourse
+-> python manage.py migrate
+
+
+4. kiểm tra database
+-> show database
+-> use tên database
+-> show tables
+-> select * from course
+
+5. Cấu hình cho file chạy
+-> qua tap web
+-> add new web application
+-> next
+-> django
+-> 3.9
+-> đặt tên (myeventapi)
+-> thay đường dẫn source code đến đg dấn project
+-> thay đường dẫn mỗi trường ảo
+-> cấu hình tài nguyên tĩnh
+-> Chỉnh file wsgi (project_home, os.environ)
+-> đưa domain vào biên ALLOWED_HOSTS = [QUOCDATA.PYTHINSDFAS]
+-> mở static_root ra và chạy python manage.py collectstatic
+
+
+ 
+
+
+
+QuocDat@2004

@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 from rest_framework import viewsets, generics, permissions, mixins, status, parsers
+from django.contrib.auth import authenticate
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Category, Event, Comment, Ticket, User, PaymentTicket, Payment, StatusPayment,TypePayment, StatusTicket,StatusNotification
@@ -16,6 +17,13 @@ import base64
 import qrcode
 from io import BytesIO
 from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes
+from google.oauth2 import id_token
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import AllowAny
+from google.auth.transport.requests import Request
+import requests
+from django.contrib.auth.decorators import login_required
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView):
@@ -24,7 +32,7 @@ class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveA
     permission_classes = [permissions.AllowAny]
 
 
-class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPIView):
+class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = dao.get_user()
     serializer_class = serializers.UserSerializer
     parser_classes = [parsers.MultiPartParser]
@@ -32,6 +40,10 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
 
     @action(methods=['get'], url_name='current_user', detail=False)
     def current_user(self, request):
+        user = request.user
+        if user.is_anonymous:
+            return Response({'error': 'Token không hợp lệ hoặc đã hết hạn'}, status=401)
+
         return Response(serializers.UserSerializer(request.user).data)
 
     @action(methods=['post'], url_name='logout', detail=False)
@@ -39,6 +51,79 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView, generics.RetrieveAPI
         if request.auth:
             request.auth.delete()
         return Response({"detail": "Đăng xuất thành công"})
+
+    @action(methods=['post'], url_path='login', detail=False, permission_classes=[], parser_classes=[parsers.JSONParser])
+    def login(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        expected_role = request.data.get('role')
+
+        user = authenticate(username=username, password=password)
+        print(user.role)
+        if user is not None:
+            if user.role != expected_role:
+                return Response({'detail': 'Không đúng vai trò.'}, status=status.HTTP_403_FORBIDDEN)
+
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": serializers.UserSerializer(user).data,
+                'role': user.role
+            })
+
+        return Response({"error": "Sai tài khoản hoặc mật khẩu"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    @action(methods=['post'], url_path='google-login', detail=False, permission_classes=[],
+            parser_classes=[parsers.JSONParser])
+    def google_login(self, request):
+        token = request.data.get("id_token")
+        access_token = request.data.get("access_token")
+        if not token:
+            return Response({'error': 'Thiếu id_token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not access_token:
+            return Response({'error': 'Thiếu access_token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            google_resp = id_token.verify_oauth2_token(token, Request())
+        except ValueError:
+            return Response({"error": "Token không hợp lệ"}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = google_resp
+        if data is None:
+            return Response({"error": "Không có dữ liệu!!!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        email = data["email"]
+        name = email.split('@')[0]
+        picture = None
+
+        # Gọi Google People API để lấy avatar
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        response = requests.get(
+            "https://people.googleapis.com/v1/people/me?personFields=photos",
+            headers=headers
+        )
+        if response.status_code == 200:
+            people_data = response.json()
+            if "photos" in people_data:
+                picture = people_data["photos"][0].get("url")
+
+        user, created = User.objects.get_or_create(username=email, defaults={
+            "email": email,
+            "first_name": name,
+            "avatar": picture,
+            "role": "participant"
+        })
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": serializers.UserSerializer(user).data
+        })
 
 
 class EventViewSet(viewsets.ModelViewSet):
@@ -107,6 +192,10 @@ def payment_success_view(request):
 
 def generate_qr_url(payment_ticket):
     return f"{settings.DOMAIN}/ticket/checkin/{payment_ticket.id}/"
+
+
+def home(request):
+    return render(request, 'home.html')
 
 
 def generate_qr_code(data: str) -> str:
@@ -185,7 +274,32 @@ def checkin_api(request, payment_ticket_id):
         return JsonResponse({'error': 'Không tìm thấy vé'}, status=404)
 
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def google_auth(request):
+    token = request.data.get('token')
+    if not token:
+        return Response({'error': 'Token in valid'}, status=status.HTTP_400_BAD_REQUEST)
 
+    try:
+        idinfo = id_token.verify_oauth2_token(token, requests.Request(), settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY)
+
+        print(idinfo)
+
+        email = idinfo['email']
+        name = idinfo.get('name', '')
+        picture_url = idinfo.get('picture')
+
+        user, created = User.objects.get_or_create(username=email, avatar=picture_url, defaults={'email': email, 'first_name': name})
+
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'avatar': picture_url
+        })
+    except Exception as e:
+        return Response({'error': 'Invalid token'}, status=400)
 
 
 
