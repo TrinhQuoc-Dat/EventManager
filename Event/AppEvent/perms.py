@@ -15,6 +15,9 @@ class IsOrganizer(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return request.user.role == 'organizer'
+    
+    def has_object_permission(self, request, view, obj):
+        return request.user == obj.organizer
 
 
 class UserPermission(permissions.BasePermission):

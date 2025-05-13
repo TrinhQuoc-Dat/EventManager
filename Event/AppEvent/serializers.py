@@ -6,8 +6,13 @@ from .models import Category, User, Event, Ticket, Payment, PaymentTicket, Ticke
 class CategorySerializer(ModelSerializer):
     class Meta:
         model = Category
-        fields = '__all__'
+        fields = ['id', 'name']
 
+class ItemSerializer(ModelSerializer):
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['image'] = instance.image.url if instance.image else ''
+        return data
 
 class UserSerializer(ModelSerializer):
     class Meta:
@@ -34,7 +39,24 @@ class UserSerializer(ModelSerializer):
         return user
 
 
-class EventSerializer(ModelSerializer):
+class EventSerializer(ItemSerializer):
+    price = SerializerMethodField()
+
+    class Meta:
+        model = Event
+        fields = ['id', 'title', 'image', 'start_date_time', 'location', 'location_name', 'price', 'category_id']
+    
+    def get_price(self, obj):
+        # Giả sử lấy giá thấp nhất từ TicketType liên quan
+        ticket_types = obj.ticket_types.filter(active=True)
+        return min((tt.ticket_price for tt in ticket_types), default=0) if ticket_types.exists() else 0
+
+class EventDetailSerializer(ItemSerializer):
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['organizer'] = UserSerializer(instance.organizer).data
+        return data
+    
     class Meta:
         model = Event
         fields = '__all__'

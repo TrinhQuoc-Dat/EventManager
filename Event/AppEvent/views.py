@@ -31,6 +31,12 @@ class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveA
     serializer_class = serializers.CategorySerializer
     permission_classes = [permissions.AllowAny]
 
+    @action(methods=['get'], detail=True, url_path='events')
+    def get_events(self, request, pk):
+        events = self.get_object().event_set.filter(active=True)
+        # pagination_class = paginations.EventSetPagination
+        return Response(serializers.EventSerializer(events, many=True).data, status=status.HTTP_200_OK)
+
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = dao.get_user()
@@ -129,9 +135,36 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
 class EventViewSet(viewsets.ModelViewSet):
     queryset = dao.get_events()
     parser_classes = [parsers.MultiPartParser]
-    serializer_class = serializers.EventSerializer
+    # serializer_class = serializers.EventSerializer
     pagination_class = paginations.EventSetPagination
-    permission_classes = [perms.IsOrganizer]
+    # permission_classes = [perms.IsOrganizer]
+
+    def get_queryset(self):
+        query = self.queryset
+
+        q = self.request.query_params.get('q')
+        if q:
+            query = query.filter(title__icontains=q)
+
+        cate_id = self.request.query_params.get('category_id')
+        if cate_id:
+            query = query.filter(category_id=cate_id)
+
+        return query
+
+    def get_serializer_class(self):
+        if self.action in ['retrieve', 'create', 'update', 'destroy']:
+            return serializers.EventDetailSerializer
+        return serializers.EventSerializer
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        elif self.action in ['create']:
+            return [permissions.IsAuthenticated(), perms.IsOrganizer()]
+        elif self.action in ['update', 'destroy', 'get_ticket_by_event']:
+            return [perms.IsOrganizer()]  # Kiểm tra chi tiết trong get_object
+        return [permissions.IsAuthenticated()]
 
     @action(methods=['get'], url_path="tickets", detail=True)
     def get_ticket_by_event(self, request, pk):
