@@ -13,7 +13,13 @@ class ItemSerializer(ModelSerializer):
         data = super().to_representation(instance)
         data['image'] = instance.image.url if instance.image else ''
         return data
+    
 class OrganizerSerializer(ModelSerializer):
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['avatar'] = instance.avatar.url if instance.avatar else ''
+        return data
+    
     class Meta:
         model = User
         fields = ['organization_name', 'avatar']
@@ -43,6 +49,27 @@ class UserSerializer(ModelSerializer):
         return user
 
 
+class TicketTypeSerializer(ModelSerializer):
+    # event_id = serializers.PrimaryKeyRelatedField(
+    #     queryset=Event.objects.all(),
+    #     required=True
+    # )
+
+    class Meta:
+        model = TicketType
+        fields = ['id', 'name', 'ticket_price', 'event', 'so_luong']
+    
+    # def create(self, validated_data):
+    #     event_id = validated_data.pop('event_id')
+    #     event = Event.objects.get(id=event_id)
+    #     ticket_type = TicketType.objects.create(**validated_data, event=event)
+    #     return ticket_type
+    
+class TicketSerializer(ModelSerializer):
+    class Meta:
+        model = Ticket
+        fields = "__all__"
+
 class EventSerializer(ItemSerializer):
     price = SerializerMethodField()
 
@@ -59,23 +86,19 @@ class EventDetailSerializer(ItemSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['organizer'] = OrganizerSerializer(instance.organizer).data
+        data['ticket_types'] = TicketTypeSerializer(instance.ticket_types.all(), many=True).data
         return data
     
     class Meta:
         model = Event
         fields = '__all__'
+        # fields = ['id', 'title', 'description', 'start_date_time',
+        #           'end_date_time', 'image', 'location', 'location_name',
+        #           'kinh_do', 'vi_do', 'category_id', 
+        #           'organizer', 'ticket_types']
 
 
-class TicketSerializer(ModelSerializer):
-    class Meta:
-        model = Ticket
-        fields = "__all__"
 
-
-class TicketTypeSerializer(ModelSerializer):
-    class Meta:
-        model = TicketType
-        fields = "__all__"
 
 
 class PaymentTicketFullSerializer(ModelSerializer):

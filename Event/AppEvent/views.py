@@ -29,7 +29,12 @@ from django.contrib.auth.decorators import login_required
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView):
     queryset = dao.get_categories()
     serializer_class = serializers.CategorySerializer
-    permission_classes = [permissions.AllowAny]
+    # permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        if self.action in ['create']:
+            return [permissions.IsAuthenticated(), perms.IsOrganizer()]
+        return [permissions.AllowAny()]
 
     @action(methods=['get'], detail=True, url_path='events')
     def get_events(self, request, pk):
@@ -179,9 +184,15 @@ class TicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.CreateA
     serializer_class = serializers.TicketSerializer
 
 
-class TicketTypeViewSet(viewsets.ViewSet, generics.ListAPIView):
+class TicketTypeViewSet(viewsets.ModelViewSet):
     queryset = TicketType.objects.filter(active=True)
     serializer_class = serializers.TicketTypeSerializer
+
+    def get_permissions(self):
+        if self.action in ['create']:
+            return [permissions.IsAuthenticated(), perms.IsOrganizer()]
+        return [permissions.AllowAny()]
+    
 
 
 class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
