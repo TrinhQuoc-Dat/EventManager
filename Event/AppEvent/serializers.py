@@ -13,6 +13,10 @@ class ItemSerializer(ModelSerializer):
         data = super().to_representation(instance)
         data['image'] = instance.image.url if instance.image else ''
         return data
+class OrganizerSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['organization_name', 'avatar']
 
 class UserSerializer(ModelSerializer):
     class Meta:
@@ -54,7 +58,7 @@ class EventSerializer(ItemSerializer):
 class EventDetailSerializer(ItemSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data['organizer'] = UserSerializer(instance.organizer).data
+        data['organizer'] = OrganizerSerializer(instance.organizer).data
         return data
     
     class Meta:

@@ -163,7 +163,7 @@ class EventViewSet(viewsets.ModelViewSet):
         elif self.action in ['create']:
             return [permissions.IsAuthenticated(), perms.IsOrganizer()]
         elif self.action in ['update', 'destroy', 'get_ticket_by_event']:
-            return [perms.IsOrganizer()]  # Kiểm tra chi tiết trong get_object
+            return [permissions.IsAuthenticated(), perms.IsOrganizer()]  # Kiểm tra chi tiết trong get_object
         return [permissions.IsAuthenticated()]
 
     @action(methods=['get'], url_path="tickets", detail=True)
