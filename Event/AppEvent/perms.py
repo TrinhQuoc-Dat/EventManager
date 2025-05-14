@@ -26,3 +26,12 @@ class UserPermission(permissions.BasePermission):
             return [permissions.IsAuthenticated]
 
         return [permissions.AllowAny]
+
+# class IsCommentOwner(permissions.IsAuthenticated):
+#     def has_object_permission(self, request, view, comment):
+#         return super().has_permission(request, view) and request.user == comment.user
+#     def has_permission(self, request, view):
+#         return request.user and request.user.is_authenticated
+
+#     def has_object_permission(self, request, view, comment):
+#         return request.user == comment.user

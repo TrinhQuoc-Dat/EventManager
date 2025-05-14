@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from rest_framework import serializers
-from .models import Category, User, Event, Ticket, Payment, PaymentTicket, TicketType
+from .models import Category, User, Event, Ticket, Payment, PaymentTicket, TicketType, Comment
 
 
 class CategorySerializer(ModelSerializer):
@@ -87,6 +87,7 @@ class EventDetailSerializer(ItemSerializer):
         data = super().to_representation(instance)
         data['organizer'] = OrganizerSerializer(instance.organizer).data
         data['ticket_types'] = TicketTypeSerializer(instance.ticket_types.all(), many=True).data
+        data['comment_set'] = CommentSerializer(instance.comment_set.all(), many=True).data
         return data
     
     class Meta:
@@ -97,7 +98,25 @@ class EventDetailSerializer(ItemSerializer):
         #           'kinh_do', 'vi_do', 'category_id', 
         #           'organizer', 'ticket_types']
 
+class CommentUserSerializer(ModelSerializer):
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['avatar'] = instance.avatar.url if instance.avatar else ''
+        return data
+    
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'avatar']
 
+class CommentSerializer(ModelSerializer):
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['user'] = CommentUserSerializer(instance.user).data
+        return data
+    
+    class Meta:
+        model = Comment
+        fields = ['id', 'content', 'rate', 'created_date', 'user', 'event']
 
 
 
