@@ -48,6 +48,10 @@ class UserSerializer(ModelSerializer):
 
         return user
 
+class UserFCMTokenSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['fcm_token']
 
 class TicketTypeSerializer(ModelSerializer):
     # event_id = serializers.PrimaryKeyRelatedField(

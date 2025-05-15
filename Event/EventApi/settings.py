@@ -13,6 +13,8 @@ import os.path
 from pathlib import Path
 from datetime import timedelta
 import os
+import firebase_admin
+from firebase_admin import credentials
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -226,3 +228,14 @@ CLIENT_ID = "INSarnAFEh7Wv5bzCS8CVy4i6a44Ae57aGCP57Hw"
 CLIENT_SECRET = "B2bOAdLqxh7oPMlRQuoEXh2xgWT5g8CiyKEQiOOybChzElekjcmwf0cQriUFHDmkKXkQ5NwZ9PHstcLSVbJuZVLJb13kay3ZVwNdM629aLrV0igjvh2Bbe6q28rDWyp7"
 
 GOONG_API_KEY = 'D6djAnuQELJE6MOHxB8WyhzLb2pQco3xvXOagCH2'
+
+FIREBASE_CRED_PATH = BASE_DIR / 'eventapp-1ead2-firebase-adminsdk-fbsvc-f22eb7ade7.json'
+cred = credentials.Certificate(FIREBASE_CRED_PATH)
+firebase_admin.initialize_app(cred)
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'

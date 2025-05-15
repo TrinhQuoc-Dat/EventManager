@@ -50,6 +50,15 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     parser_classes = [parsers.MultiPartParser]
     permission_classes = [permissions.IsAuthenticated]
 
+    @action(methods=['post'], url_path='fcm-token', detail=False)
+    def save_fcm_token(self, request):
+        user = request.user
+        serializer = serializers.UserFCMTokenSerializer(user, data={'fcm_token': request.data.get('fcm_token')}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "FCM token saved"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     @action(methods=['get'], url_name='current_user', detail=False, permission_classes = [perms.UserPermission])
     def current_user(self, request):
         user = request.user
