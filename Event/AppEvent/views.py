@@ -24,12 +24,24 @@ from rest_framework.permissions import AllowAny
 from google.auth.transport.requests import Request
 import requests
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView):
     queryset = dao.get_categories()
     serializer_class = serializers.CategorySerializer
-    permission_classes = [permissions.AllowAny]
+    # permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        if self.action in ['create']:
+            return [permissions.IsAuthenticated(), perms.IsOrganizer()]
+        return [permissions.AllowAny()]
+
+    @action(methods=['get'], detail=True, url_path='events')
+    def get_events(self, request, pk):
+        events = self.get_object().event_set.filter(active=True)
+        # pagination_class = paginations.EventSetPagination
+        return Response(serializers.EventSerializer(events, many=True).data, status=status.HTTP_200_OK)
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
@@ -37,6 +49,15 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     serializer_class = serializers.UserSerializer
     parser_classes = [parsers.MultiPartParser]
     permission_classes = [permissions.IsAuthenticated]
+
+    @action(methods=['post'], url_path='fcm-token', detail=False)
+    def save_fcm_token(self, request):
+        user = request.user
+        serializer = serializers.UserFCMTokenSerializer(user, data={'fcm_token': request.data.get('fcm_token')}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "FCM token saved"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['get'], url_name='current_user', detail=False, permission_classes = [perms.UserPermission])
     def current_user(self, request):
@@ -128,15 +149,118 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
 
 class EventViewSet(viewsets.ModelViewSet):
     queryset = dao.get_events()
-    parser_classes = [parsers.MultiPartParser]
-    serializer_class = serializers.EventSerializer
+    parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
     pagination_class = paginations.EventSetPagination
-    permission_classes = [perms.IsOrganizer]
+
+    def get_queryset(self):
+        query = self.queryset
+
+        q = self.request.query_params.get('q')
+        if q:
+            query = query.filter(title__icontains=q)
+
+        cate_id = self.request.query_params.get('category_id')
+        if cate_id:
+            query = query.filter(category_id=cate_id)
+
+        return query
+
+    def get_serializer_class(self):
+        if self.action in ['retrieve', 'create', 'update', 'destroy', 'get_comments']:
+            return serializers.EventDetailSerializer
+        return serializers.EventSerializer
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        elif self.action in ['create', 'update', 'destroy', 'get_ticket_by_event']:
+            return [permissions.IsAuthenticated(), perms.IsOrganizer()]  
+        elif self.action in ['get_comments'] and self.request.method.__eq__('POST'):
+            return [permissions.IsAuthenticated(), perms.OwnerAuthenticated()]
+        return [permissions.IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        location = self.request.data.get('location')
+        if not location:
+            return Response({"error": "Địa chỉ là bắt buộc"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            geocoding_url = f"https://rsapi.goong.io/Geocode?address={location}&api_key={settings.GOONG_API_KEY}"
+            response = requests.get(geocoding_url)
+            geocoding_data = response.json()
+
+            if geocoding_data['status'] != 'OK' or not geocoding_data.get('results'):
+                return Response({"error": "Không tìm thấy địa chỉ"}, status=status.HTTP_400_BAD_REQUEST)
+
+            coordinates = geocoding_data['results'][0]['geometry']['location']
+            vi_do = coordinates['lat']
+            kinh_do = coordinates['lng']
+
+            with transaction.atomic():
+                serializer.save(
+                    organizer=self.request.user,
+                    vi_do=vi_do,
+                    kinh_do=kinh_do
+                )
+        except Exception as e:
+            return Response({"error": f"Lỗi khi gọi Goong API: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        location = self.request.data.get('location', instance.location)  # Lấy location mới hoặc giữ nguyên
+
+        # Chỉ gọi Goong API nếu location thay đổi
+        if 'location' in self.request.data and location != instance.location:
+            if not location:
+                return Response({"error": "Địa chỉ là bắt buộc"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                geocoding_url = f"https://rsapi.goong.io/Geocode?address={location}&api_key={settings.GOONG_API_KEY}"
+                response = requests.get(geocoding_url)
+                response.raise_for_status()
+                geocoding_data = response.json()
+
+                if geocoding_data['status'] != 'OK' or not geocoding_data.get('results'):
+                    return Response({"error": "Không tìm thấy địa chỉ"}, status=status.HTTP_400_BAD_REQUEST)
+
+                coordinates = geocoding_data['results'][0]['geometry']['location']
+                vi_do = coordinates['lat']
+                kinh_do = coordinates['lng']
+
+                with transaction.atomic():
+                    serializer.save(
+                        vi_do=vi_do,
+                        kinh_do=kinh_do
+                    )
+            except requests.RequestException as e:
+                return Response({"error": f"Lỗi khi gọi Goong API: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            except Exception as e:
+                return Response({"error": f"Lỗi không xác định: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            # Nếu location không thay đổi, chỉ lưu các trường khác
+            with transaction.atomic():
+                serializer.save()
 
     @action(methods=['get'], url_path="tickets", detail=True)
     def get_ticket_by_event(self, request, pk):
         tickets = dao.get_ticket_by_event(pk)
         return Response(serializers.TicketSerializer(tickets, many=True).data)
+
+    @action(methods=['get', 'post'], detail=True, url_path='comments')
+    def get_comments(self, request, pk):
+        if request.method.__eq__('POST'):
+            u = serializers.CommentSerializer(data={
+                'content': request.data.get('content'),
+                'rate': request.data.get('rate'),
+                'user': request.user.pk,
+                'event': pk
+            })
+            u.is_valid(raise_exception=True)
+            c = u.save()
+            return Response(serializers.CommentSerializer(c).data, status=status.HTTP_201_CREATED)
+        else:
+            comments = self.get_object().comment_set.select_related('user').filter(active=True)
+            return Response(serializers.CommentSerializer(comments, many=True).data, status=status.HTTP_200_OK)
 
 
 class TicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.CreateAPIView, generics.ListAPIView):
@@ -146,11 +270,21 @@ class TicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.CreateA
     serializer_class = serializers.TicketSerializer
 
 
-class TicketTypeViewSet(viewsets.ViewSet, generics.ListAPIView):
+class TicketTypeViewSet(viewsets.ModelViewSet):
     queryset = TicketType.objects.filter(active=True)
     serializer_class = serializers.TicketTypeSerializer
 
+    def get_permissions(self):
+        if self.action in ['create']:
+            return [permissions.IsAuthenticated(), perms.IsOrganizer()]
+        return [permissions.AllowAny()]
+    
+class CommentViewSet(viewsets.ViewSet, generics. DestroyAPIView, generics.UpdateAPIView):
+    queryset = Comment.objects.filter(active=True)
+    serializer_class = serializers.CommentSerializer
+    permission_classes = [perms.OwnerAuthenticated()]
 
+    
 class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
     queryset = dao.get_payment_ticket()
     permission_classes = [perms.OwnerAuthenticated]

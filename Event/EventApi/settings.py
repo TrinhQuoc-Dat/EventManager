@@ -13,6 +13,8 @@ import os.path
 from pathlib import Path
 from datetime import timedelta
 import os
+import firebase_admin
+from firebase_admin import credentials
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -142,6 +144,9 @@ SWAGGER_SETTINGS = {
     'LOGOUT_URL': '/admin/logout/',
 }
 
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '708848403876-6ooe33cah6p0f1343ll7fqj2bnt9dfin.apps.googleusercontent.com'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
+
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -223,5 +228,19 @@ DOMAIN = "http://localhost:8000"
 # CLIENT_ID = "ULECp6fQAOnJYAd048LPqoMC7TRgv5LRYOQXusBY"
 # CLIENT_SECRET = "RNFQT7dbxzkO6GQ2vjkluBOiXkogSsM3odmxR1wpxJNybStvj7RI4Kg03n8OQaW2l9UbMWPRbwXTB6lmXeMEpEhNOIcXSmQtUvwOHUqlm5KsUvm0qCM8DaHQiWbt2PGF"
 
-CLIENT_ID = "AqXUqoa68insca0NltNk8zfUR9sAQeTMNAmn7Kmc"
-CLIENT_SECRET = "6p7Wp9nKoe9Gqg6gOPxsAV8CIrZB0FddYOtrJOvOzwK7qttBLKf44LlgSzpYo23tpq8HjnSMYu7tOKKZUm2HAN5HrxOto4R2ZAtdlJFIkzX1k7isEd5uv6CINjRQyU1d"
+CLIENT_ID = "INSarnAFEh7Wv5bzCS8CVy4i6a44Ae57aGCP57Hw"
+CLIENT_SECRET = "B2bOAdLqxh7oPMlRQuoEXh2xgWT5g8CiyKEQiOOybChzElekjcmwf0cQriUFHDmkKXkQ5NwZ9PHstcLSVbJuZVLJb13kay3ZVwNdM629aLrV0igjvh2Bbe6q28rDWyp7"
+
+GOONG_API_KEY = 'D6djAnuQELJE6MOHxB8WyhzLb2pQco3xvXOagCH2'
+
+FIREBASE_CRED_PATH = BASE_DIR / 'eventapp-1ead2-firebase-adminsdk-fbsvc-f22eb7ade7.json'
+cred = credentials.Certificate(FIREBASE_CRED_PATH)
+firebase_admin.initialize_app(cred)
+
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'

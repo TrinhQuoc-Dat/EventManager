@@ -40,6 +40,8 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractUser):
     avatar = CloudinaryField('avatar')
     role = models.CharField(max_length=20, choices=UserRole.choices, default=UserRole.PARTICIPANT)
+    organization_name = models.CharField(max_length=255, null=True, blank=True)
+    fcm_token = models.CharField(max_length=255, blank=True, null=True)
     objects = CustomUserManager()
 
     groups = models.ManyToManyField(
@@ -74,9 +76,11 @@ class Category(BaseModel):
 class Event(BaseModel):
     title = models.CharField(max_length=100, null=False)
     description = models.TextField()
-    date_time = models.DateTimeField()
+    start_date_time = models.DateTimeField()
+    end_date_time = models.DateTimeField()
     image = CloudinaryField(null=False)
     location = models.CharField(max_length=255, null=False)
+    location_name = models.CharField(max_length=255, null=False)
     kinh_do = models.FloatField(null=True, blank=True)
     vi_do = models.FloatField(null=True, blank=True)
 
