@@ -144,6 +144,9 @@ SWAGGER_SETTINGS = {
     'LOGOUT_URL': '/admin/logout/',
 }
 
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '708848403876-6ooe33cah6p0f1343ll7fqj2bnt9dfin.apps.googleusercontent.com'
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
+
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -153,7 +156,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'eventdb',
         'USER': 'root',
-        'PASSWORD': 'Abc@123',
+        # 'PASSWORD': 'Abc@123',
+        'PASSWORD': 'Admin@123',
         'HOST': ''
     }
 }
@@ -232,6 +236,7 @@ GOONG_API_KEY = 'D6djAnuQELJE6MOHxB8WyhzLb2pQco3xvXOagCH2'
 FIREBASE_CRED_PATH = BASE_DIR / 'eventapp-1ead2-firebase-adminsdk-fbsvc-f22eb7ade7.json'
 cred = credentials.Certificate(FIREBASE_CRED_PATH)
 firebase_admin.initialize_app(cred)
+
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
