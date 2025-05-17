@@ -5,6 +5,7 @@ import { Button, HelperText, Menu, TextInput } from "react-native-paper";
 import MyStyles from "../../styles/MyStyles";
 import * as ImagePicker from 'expo-image-picker';
 import Apis, { endpoints } from "../../configs/Apis";
+import { UploadCloudinary } from "../../service/UploadCloudinary";
 
 const Resgister = () => {
 
@@ -24,7 +25,7 @@ const Resgister = () => {
         icon: 'text',
         secureTextEntry: false
     }
-    , {
+        , {
         label: 'Tên đăng nhập',
         field: 'username',
         icon: 'account',
@@ -60,7 +61,7 @@ const Resgister = () => {
             const result = await ImagePicker.launchImageLibraryAsync();
 
             if (!result.canceled)
-                setState(result.assets[0], 'avatar');
+                setState(result.assets[0], 'image');
         }
     }
 
@@ -91,15 +92,15 @@ const Resgister = () => {
                 setLoading(true);
 
                 let form = new FormData();
+                let avatarUrl = null;
+
+                if (user.image) {
+                    avatarUrl = await UploadCloudinary(user.image);
+                    setState(avatarUrl, 'avatar');
+                }
                 for (let key in user)
                     if (key !== 'confirm') {
-                        if (key === 'avatar') {
-                            form.append('avatar', {
-                                uri: user.avatar?.uri,
-                                name: user.avatar?.fileName,
-                                type: user.avatar?.type
-                            });
-                        } else
+                        if (key !== 'image')
                             form.append(key, user[key]);
                     }
                 form.append('role', role);
@@ -115,15 +116,17 @@ const Resgister = () => {
 
             } catch (ex) {
                 console.error(ex);
+                setMsg("Lỗi khi đăng ký!");
             } finally {
                 setLoading(false);
             }
         }
     }
 
+
     return (
 
-        <ScrollView contentContainerStyle={MyStyles.container}>
+        <ScrollView contentContainerStyle={[MyStyles.container, { flexGrow: 1 }]} >
             <Text style={MyStyles.subject}>Đăng ký tài khoản</Text>
 
             <HelperText type="error" visible={msg}>
@@ -178,12 +181,19 @@ const Resgister = () => {
                     />
                 </Menu>
             </View>
+            <View>
+
+            </View>
             <TouchableOpacity style={MyStyles.m} onPress={picker}>
                 <Text style={MyStyles.text}>Chọn ảnh đại diện...</Text>
             </TouchableOpacity>
-                
+
             <View>
-                {user?.avatar && <Image source={{ uri: user.avatar.uri }} style={[MyStyles.avatar, MyStyles.m]} />}
+                {/* {user?.avatar && <Image source={{ uri: user.avatar.uri }} style={[MyStyles.avatar, MyStyles.m]} />} */}
+            </View>
+
+            <View>
+                {user?.image && <Text style={{color: "blue"}}>{user.image.fileName || user.image.name}</Text>}
             </View>
 
             <Button
@@ -196,6 +206,8 @@ const Resgister = () => {
             >
                 Đăng ký
             </Button>
+            <View style={{ height: "300px", width: "100%" }} />
+
         </ScrollView>
 
     )
