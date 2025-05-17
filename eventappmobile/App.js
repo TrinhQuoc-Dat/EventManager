@@ -9,6 +9,9 @@ import MyUserReducer from "./reducers/MyUserReducer";
 import { Icon } from "react-native-paper";
 import Profile from "./component/User/Profile";
 import { Provider as PaperProvider } from 'react-native-paper';
+import Events from "./component/home/Events";
+import EventDetail from "./component/home/EventDetail";
+import CreateEvent from "./component/home/CreateEvent";
 
 const Tab = createBottomTabNavigator();
 
@@ -24,6 +27,9 @@ const TabNavigator = () => {
 
         </> : <>
           <Tab.Screen name="home" component={Home} />
+          <Tab.Screen name="events" component={Events} />
+          <Tab.Screen name="eventdetail" component={EventDetail} />
+          <Tab.Screen name="createvent" component={CreateEvent} />
           <Tab.Screen name="login" component={Profile} options={{ title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
         </>}
       </Tab.Navigator>
