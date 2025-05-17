@@ -1,5 +1,6 @@
 from firebase_admin import messaging
 
+
 def send_push_notification(fcm_token, title, body):
     if not fcm_token:
         return False

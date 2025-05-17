@@ -48,7 +48,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = dao.get_user()
     serializer_class = serializers.UserSerializer
     parser_classes = [parsers.MultiPartParser]
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     @action(methods=['post'], url_path='fcm-token', detail=False)
     def save_fcm_token(self, request):

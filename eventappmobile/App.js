@@ -1,28 +1,48 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import Home from "./component/home/Home";
-import EventDetail from "./component/home/EventDetail";
-import Events from "./component/home/Events";
-// import Events from "./component/home/Events";
+import { MyDispatchContext, MyUserContext } from "./configs/Context";
+import { useContext, useReducer } from "react";
+import Resgister from "./component/User/Register";
+import Login from "./component/User/Login";
+import MyUserReducer from "./reducers/MyUserReducer";
+import { Icon } from "react-native-paper";
+import Profile from "./component/User/Profile";
+import { Provider as PaperProvider } from 'react-native-paper';
 
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
+  const user = useContext(MyUserContext);
   return (
-    <Tab.Navigator>
-      <Tab.Screen name="home" component={Home}/>
-      <Tab.Screen name="eventdetail" component={EventDetail}/>
-      <Tab.Screen name="events" component={Events}/>
-    </Tab.Navigator>
+
+    <PaperProvider>
+      <Tab.Navigator>
+        {user === null ? <>
+          <Tab.Screen name="login" component={Login} options={{ title: "Đăng nhập", tabBarIcon: () => <Icon size={30} source="account" /> }} />
+          <Tab.Screen name="register" component={Resgister} options={{ title: 'Đăng Ký', tabBarIcon: () => <Icon size={30} source="account-plus-outline" /> }} />
+
+        </> : <>
+          <Tab.Screen name="home" component={Home} />
+          <Tab.Screen name="login" component={Profile} options={{ title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
+        </>}
+      </Tab.Navigator>
+    </PaperProvider>
+
   );
 }
 
 
 const App = () => {
+  const [user, dispatch] = useReducer(MyUserReducer, null);
   return (
-    <NavigationContainer>
-      <TabNavigator />
-    </NavigationContainer>
+    <MyUserContext.Provider value={user}>
+      <MyDispatchContext.Provider value={dispatch}>
+        <NavigationContainer>
+          <TabNavigator />
+        </NavigationContainer>
+      </MyDispatchContext.Provider>
+    </MyUserContext.Provider>
   )
 }
 

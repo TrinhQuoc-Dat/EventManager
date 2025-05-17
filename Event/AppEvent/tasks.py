@@ -2,7 +2,7 @@
 from celery import shared_task
 from django.utils import timezone
 from datetime import timedelta
-from .models import Event, PaymentTicket, Notification
+from .models import Event, PaymentTicket, Notification, StatusTicket, StatusNotification
 from .utils import send_push_notification
 
 @shared_task
