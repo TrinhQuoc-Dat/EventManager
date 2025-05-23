@@ -9,9 +9,10 @@ import MyUserReducer from "./reducers/MyUserReducer";
 import { Icon } from "react-native-paper";
 import Profile from "./component/User/Profile";
 import { Provider as PaperProvider } from 'react-native-paper';
-import Events from "./component/home/Events";
-import EventDetail from "./component/home/EventDetail";
-import CreateEvent from "./component/home/CreateEvent";
+import Events from "./component/Event/Events";
+import EventDetail from "./component/Event/EventDetail";
+import CreateEvent from "./component/Event/CreateEvent";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const Tab = createBottomTabNavigator();
 
@@ -26,10 +27,45 @@ const TabNavigator = () => {
           <Tab.Screen name="register" component={Resgister} options={{ title: 'Đăng Ký', tabBarIcon: () => <Icon size={30} source="account-plus-outline" /> }} />
 
         </> : <>
-          <Tab.Screen name="home" component={Home} />
-          <Tab.Screen name="events" component={Events} />
-          <Tab.Screen name="eventdetail" component={EventDetail} />
-          <Tab.Screen name="createvent" component={CreateEvent} />
+          <Tab.Screen
+            name="home"
+            component={Home}
+            options={{
+              title: 'Trang chủ',
+              tabBarIcon: ({ color, size }) => (
+                <MaterialIcons name="home" color={color} size={size} />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="events"
+            component={Events}
+            options={{
+              title: 'Sự kiện',
+              tabBarIcon: ({ color, size }) => (
+                <MaterialIcons name="event" color={color} size={size} />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="eventdetail"
+            component={EventDetail}
+            options={{
+              title: 'Chi tiết',
+              tabBarIcon: ({ color, size }) => (
+                <MaterialIcons name="info" color={color} size={size} />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="createvent"
+            component={CreateEvent}
+            options={{
+              title: 'Tạo sự kiện',
+              tabBarIcon: ({ color, size }) => (
+                <MaterialIcons name="add-circle-outline" color={color} size={size} />
+              ),
+            }} />
           <Tab.Screen name="login" component={Profile} options={{ title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
         </>}
       </Tab.Navigator>

@@ -11,6 +11,11 @@ export const endpoints = {
     'current-user': '/api/user/current_user/',
     'googleLogin': '/api/user/google-login/',
     "gg": "/oauth/",
+    'events': (cateId) => `/api/categories/${cateId}/events/`,
+    'event': (eventId) => `/api/event/${eventId}/`,
+    'event-list': '/api/event/',
+    'create-event': '/api/event/',
+    'categories': '/api/categories/'
 };
 
 export const authApis = (token) => {

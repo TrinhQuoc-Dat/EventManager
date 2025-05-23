@@ -3,6 +3,7 @@ import { View, Text, Image, FlatList, StyleSheet, ScrollView } from 'react-nativ
 import axios from 'axios';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Apis, { endpoints } from '../../configs/Apis';
 
 const EventDetail = () => {
   const [event, setEvent] = useState(null);
@@ -14,7 +15,7 @@ const EventDetail = () => {
     const fetchEvent = async () => {
       try {
         // const response = await axios.get('http://192.168.1.4:8000/api/event/3/');
-        const response = await axios.get('https://trinhquocdat.pythonanywhere.com/api/event/3/');
+        const response = Apis.get(endpoints.event(eventid));
         setEvent(response.data);
         setLoading(false);
       } catch (error) {

@@ -41,7 +41,6 @@ class User(AbstractUser):
     avatar = CloudinaryField('avatar')
     role = models.CharField(max_length=20, choices=UserRole.choices, default=UserRole.PARTICIPANT)
     organization_name = models.CharField(max_length=255, null=True, blank=True)
-    cover = CloudinaryField('avatar')
     fcm_token = models.CharField(max_length=255, blank=True, null=True)
     objects = CustomUserManager()
 

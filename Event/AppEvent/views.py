@@ -163,8 +163,6 @@ class EventViewSet(viewsets.ModelViewSet):
         serializer = serializers.EventSerializer(events, many=True, context={'request': request})
         return Response(serializer.data)
 
-
-
     def get_queryset(self):
         query = self.queryset
 
