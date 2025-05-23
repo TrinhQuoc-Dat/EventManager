@@ -32,8 +32,8 @@ DEBUG = True
 # ALLOWED_HOSTS = []
 
 # Test dùng local host
-ALLOWED_HOSTS = ['192.168.1.4']
-
+# ALLOWED_HOSTS = ['172.16.112.102', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -150,6 +150,9 @@ SWAGGER_SETTINGS = {
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = '708848403876-6ooe33cah6p0f1343ll7fqj2bnt9dfin.apps.googleusercontent.com'
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = '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'
 
+
+SESSION_COOKIE_SAMESITE = None
+SESSION_COOKIE_SECURE = False
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
