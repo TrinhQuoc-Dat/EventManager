@@ -3,6 +3,7 @@ import { View, Text, Image, FlatList, StyleSheet, TouchableOpacity } from 'react
 import axios from 'axios';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Apis, { endpoints } from '../../configs/Apis';
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -15,7 +16,7 @@ const Events = () => {
       try {
         // Thay đổi URL nếu dùng thiết bị thật hoặc server public
         // const response = await axios.get(`http://192.168.1.4:8000/api/categories/${categoryId}/events/`);
-        const response = await axios.get(`https://trinhquocdat.pythonanywhere.com/api/categories/${categoryId}/events/`);
+        const response = Apis.get(endpoints.events(categoryId));
         setEvents(response.data);
         setLoading(false);
       } catch (error) {

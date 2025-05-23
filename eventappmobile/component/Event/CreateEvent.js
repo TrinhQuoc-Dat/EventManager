@@ -6,6 +6,7 @@ import axios from 'axios';
 import { launchImageLibrary } from 'react-native-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UploadCloudinary } from "../../service/UploadCloudinary";
+import Apis, { endpoints } from '../../configs/Apis';
 
 const CreateEvent = () => {
   const [title, setTitle] = useState('');
@@ -26,7 +27,7 @@ const CreateEvent = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('https://trinhquocdat.pythonanywhere.com/api/categories/');
+        const response = await Apis.get(endpoints['categories']);
         setCategories(response.data.results || response.data);
       } catch (error) {
         console.error('Error fetching categories:', error.message);
@@ -125,7 +126,7 @@ const onChangeEnd = (event, selectedDate) => {
       console.log('Request URL:', 'https://trinhquocdat.pythonanywhere.com/api/event/');
       console.log('Request Data:', eventData);
 
-      const response = await axios.post('https://trinhquocdat.pythonanywhere.com/api/event/', eventData, {
+      const response = await Apis.post(endpoints['create-event'], eventData, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,

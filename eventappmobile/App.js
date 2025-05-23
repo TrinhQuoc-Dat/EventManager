@@ -9,9 +9,9 @@ import MyUserReducer from "./reducers/MyUserReducer";
 import { Icon } from "react-native-paper";
 import Profile from "./component/User/Profile";
 import { Provider as PaperProvider } from 'react-native-paper';
-import Events from "./component/home/Events";
-import EventDetail from "./component/home/EventDetail";
-import CreateEvent from "./component/home/CreateEvent";
+import Events from "./component/Event/Events";
+import EventDetail from "./component/Event/EventDetail";
+import CreateEvent from "./component/Event/CreateEvent";
 
 const Tab = createBottomTabNavigator();
 

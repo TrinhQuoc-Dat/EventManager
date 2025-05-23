@@ -6,7 +6,12 @@ export const endpoints = {
     'login': '/api/user/login/',
     'register': '/api/user/',
     'current-user': '/api/user/current_user/',
-    'comments': (lessonId) => `/lessons/${lessonId}/comments/`
+    'comments': (lessonId) => `/lessons/${lessonId}/comments/`,
+    'events': (cateId) => `/api/categories/${cateId}/events/`,
+    'event': (eventId) => `/api/event/${eventId}/`,
+    'create-event': '/api/event/',
+    'categories': '/api/categories/'
+
 };
 
 export const authApis = (token) => {
