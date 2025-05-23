@@ -80,7 +80,6 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
         expected_role = request.data.get('role')
 
         user = authenticate(username=username, password=password)
-        print(user.role)
         if user is not None:
             if user.role != expected_role:
                 return Response({'detail': 'Không đúng vai trò.'}, status=status.HTTP_403_FORBIDDEN)
@@ -151,6 +150,18 @@ class EventViewSet(viewsets.ModelViewSet):
     queryset = dao.get_events()
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
     pagination_class = paginations.EventSetPagination
+
+    @action(methods=['get'], url_path='user', detail=False)
+    def get_event_user(self, request):
+        user = request.user
+        events = Event.objects.filter(organizer=user)
+        page = self.paginate_queryset(events)
+        if page is not None:
+            serializer = serializers.EventSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = serializers.EventSerializer(events, many=True, context={'request': request})
+        return Response(serializer.data)
 
     def get_queryset(self):
         query = self.queryset

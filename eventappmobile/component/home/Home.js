@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import axios from 'axios';
+import Apis, { endpoints } from '../../configs/Apis';
 
 const Home = () => {
   const [categories, setCategories] = useState([]);
@@ -11,8 +12,10 @@ const Home = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('https://trinhquocdat.pythonanywhere.com/api/categories/');
+        const response = await Apis.get(endpoints["categories"]);
+        console.log(response.data)
         setCategories(response.data || []);
+        console.log("done");
       } catch (err) {
         console.error('Error fetching categories:', err.message);
         setError('Không thể tải danh mục. Vui lòng thử lại!');

@@ -6,6 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { MyDispatchContext } from "../../configs/Context";
 import MyStyles from "../../styles/MyStyles";
+import GoogleLogin from "./LoginGoogle";
 
 
 const Login = () => {
@@ -74,6 +75,7 @@ const Login = () => {
         }
     }
 
+
     return (
         <ScrollView>
             <HelperText type="error" visible={msg}>
@@ -128,6 +130,16 @@ const Login = () => {
 
 
             <Button onPress={login} disabled={loading} loading={loading} style={[MyStyles.m, MyStyles.button]} mode="contained">Đăng nhập</Button>
+            
+            <View
+                style={{
+                    height: 1,
+                    backgroundColor: '#ccc',
+                    marginVertical: 10,    
+                }}
+            />
+
+            <GoogleLogin/>
         </ScrollView>
     )
 }

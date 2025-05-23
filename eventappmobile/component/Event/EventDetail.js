@@ -3,7 +3,7 @@ import { View, Text, Image, FlatList, StyleSheet, ScrollView } from 'react-nativ
 import axios from 'axios';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import Apis from '../../configs/Apis';
+import Apis, { endpoints } from '../../configs/Apis';
 
 const EventDetail = () => {
   const [event, setEvent] = useState(null);

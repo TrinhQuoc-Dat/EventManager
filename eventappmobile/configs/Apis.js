@@ -1,17 +1,21 @@
 import axios from "axios";
 
-const BASE_URL = 'https://trinhquocdat.pythonanywhere.com/';
+// const BASE_URL = 'https://trinhquocdat.pythonanywhere.com/';
+
+// const BASE_URL = "http://172.16.112.102:8000/";
+const BASE_URL = "http://172.16.112.104:8000/"
 
 export const endpoints = {
     'login': '/api/user/login/',
     'register': '/api/user/',
     'current-user': '/api/user/current_user/',
-    'comments': (lessonId) => `/lessons/${lessonId}/comments/`,
+    'googleLogin': '/api/user/google-login/',
+    "gg": "/oauth/",
     'events': (cateId) => `/api/categories/${cateId}/events/`,
     'event': (eventId) => `/api/event/${eventId}/`,
+    'event-list': '/api/event/',
     'create-event': '/api/event/',
     'categories': '/api/categories/'
-
 };
 
 export const authApis = (token) => {

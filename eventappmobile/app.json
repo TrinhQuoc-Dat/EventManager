@@ -3,10 +3,12 @@
     "name": "eventappmobile",
     "slug": "eventappmobile",
     "version": "1.0.0",
+    "owner": "trinhquocdat",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "scheme": "eventapp",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",

@@ -25,8 +25,8 @@ from AppEvent import admin
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Course API",
-        default_version='v1',
+        title="Event API",
+        default_version='v2.9',
         description="APIs for CourseApp",
         contact=openapi.Contact(email="trinhquocdat041004@gmail.com"),
         license=openapi.License(name="Trinh Quoc Dat"),
