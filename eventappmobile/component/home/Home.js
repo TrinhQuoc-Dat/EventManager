@@ -14,6 +14,7 @@ import Apis, { endpoints } from "../../configs/Apis";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Chip, List, Searchbar } from "react-native-paper";
 import MyStyles from "../../styles/MyStyles";
+import { useNavigation } from "@react-navigation/native";
 
 const Home = () => {
   const [categories, setCategories] = useState([]);
@@ -22,6 +23,7 @@ const Home = () => {
   const [q, setQ] = useState();
   const [page, setPage] = useState(1);
   const [cateId, setCateId] = useState(null);
+  const nav = useNavigation();
 
   const loadCates = async () => {
     let res = await Apis.get(endpoints["categories"]);
@@ -114,7 +116,9 @@ const Home = () => {
             title={item.title}
             description={item.start_date_time}
             left={() => (
-              <Image style={MyStyles.avatar} source={{ uri: item.image }} />
+              <TouchableOpacity onPress={() => nav.navigate('event-detail', {'eventId': item.id})}>
+                <Image style={MyStyles.avatar} source={{ uri: item.image }} />
+              </TouchableOpacity>
             )}
           />
         )}

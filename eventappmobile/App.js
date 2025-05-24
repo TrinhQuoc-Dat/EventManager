@@ -14,8 +14,10 @@ import EventDetail from "./component/Event/EventDetail";
 import CreateEvent from "./component/Event/CreateEvent";
 import { MaterialIcons } from "@expo/vector-icons";
 import CreateCategory from "./component/Event/CreateCategory";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
 const TabNavigator = () => {
   const user = useContext(MyUserContext);
@@ -30,12 +32,13 @@ const TabNavigator = () => {
         </> : <>
           <Tab.Screen
             name="home"
-            component={Home}
+            component={StackNavigator}
             options={{
               title: 'Trang chủ',
               tabBarIcon: ({ color, size }) => (
                 <MaterialIcons name="home" color={color} size={size} />
               ),
+              headerShown: false,
             }}
           />
           <Tab.Screen
@@ -84,6 +87,14 @@ const TabNavigator = () => {
   );
 }
 
+const StackNavigator = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name='home2' component={Home} options={{ title: 'Trang chủ', headerStyle: { backgroundColor: '#2196F3' } }} />
+      <Stack.Screen name='event-detail' component={EventDetail} options={{ title: 'Thông tin sự kiện', headerStyle: { backgroundColor: '#2196F3' } }}/>
+    </Stack.Navigator>
+  );
+}
 
 const App = () => {
   const [user, dispatch] = useReducer(MyUserReducer, null);
