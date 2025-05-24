@@ -13,6 +13,7 @@ import Events from "./component/Event/Events";
 import EventDetail from "./component/Event/EventDetail";
 import CreateEvent from "./component/Event/CreateEvent";
 import { MaterialIcons } from "@expo/vector-icons";
+import CreateCategory from "./component/Event/CreateCategory";
 
 const Tab = createBottomTabNavigator();
 
@@ -62,6 +63,15 @@ const TabNavigator = () => {
             component={CreateEvent}
             options={{
               title: 'Tạo sự kiện',
+              tabBarIcon: ({ color, size }) => (
+                <MaterialIcons name="add-circle-outline" color={color} size={size} />
+              ),
+            }} />
+            <Tab.Screen
+            name="creatcategory"
+            component={CreateCategory}
+            options={{
+              title: 'Tạo danh mục',
               tabBarIcon: ({ color, size }) => (
                 <MaterialIcons name="add-circle-outline" color={color} size={size} />
               ),

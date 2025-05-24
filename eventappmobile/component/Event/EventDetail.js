@@ -8,14 +8,14 @@ import Apis, { endpoints } from '../../configs/Apis';
 const EventDetail = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const eventid = 1
+  const eventid = 2
 
   // Gọi API để lấy dữ liệu sự kiện
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        // const response = await axios.get('http://192.168.1.4:8000/api/event/3/');
-        const response = Apis.get(endpoints.event(eventid));
+        // const response = await axios.get('http://192.168.1.16:8000/api/event/3/');
+        const response = await Apis.get(endpoints.event(eventid));
         setEvent(response.data);
         setLoading(false);
       } catch (error) {

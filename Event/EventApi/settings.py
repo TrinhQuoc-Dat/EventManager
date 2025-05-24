@@ -15,6 +15,7 @@ from datetime import timedelta
 import os
 import firebase_admin
 from firebase_admin import credentials
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,12 +30,12 @@ SECRET_KEY = 'django-insecure-o#^b1^=ligr&9#ge413_k$n4e9)e634!n_@c3@-phhff60wv=4
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
 
 # Test dùng local host
 # ALLOWED_HOSTS = ['172.16.112.102', 'localhost', '127.0.0.1']
 ALLOWED_HOSTS = ['*']
-# ALLOWED_HOSTS = ['192.168.1.4']
+# ALLOWED_HOSTS = ['192.168.1.8']
 
 # Application definition
 
@@ -60,6 +61,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -69,14 +71,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 # Cho phép React gọi API
+# CORS_ALLOWED_ORIGINS = ['http://192.168.1.8:8000', "http://localhost:8000",]
+# CORS_ALLOWED_ORIGINS = ['*']
 CORS_ALLOW_ALL_ORIGINS = True
 
 INTERNAL_IPS = [
-    '127.0.0.1'
+    '127.0.0.1',
+    '192.168.1.8'
 ]
 
 ROOT_URLCONF = 'EventApi.urls'
@@ -163,8 +167,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'eventdb',
         'USER': 'root',
-        # 'PASSWORD': 'Abc@123',
-        'PASSWORD': 'Admin@123',
+        'PASSWORD': 'Abc@123',
+        # 'PASSWORD': 'Admin@123',
         'HOST': ''
     }
 }
@@ -235,18 +239,18 @@ DOMAIN = "http://localhost:8000"
 # CLIENT_ID = "ULECp6fQAOnJYAd048LPqoMC7TRgv5LRYOQXusBY"
 # CLIENT_SECRET = "RNFQT7dbxzkO6GQ2vjkluBOiXkogSsM3odmxR1wpxJNybStvj7RI4Kg03n8OQaW2l9UbMWPRbwXTB6lmXeMEpEhNOIcXSmQtUvwOHUqlm5KsUvm0qCM8DaHQiWbt2PGF"
 
-CLIENT_ID = "INSarnAFEh7Wv5bzCS8CVy4i6a44Ae57aGCP57Hw"
-CLIENT_SECRET = "B2bOAdLqxh7oPMlRQuoEXh2xgWT5g8CiyKEQiOOybChzElekjcmwf0cQriUFHDmkKXkQ5NwZ9PHstcLSVbJuZVLJb13kay3ZVwNdM629aLrV0igjvh2Bbe6q28rDWyp7"
+CLIENT_ID = config('CLIENT_ID')
+CLIENT_SECRET = config('CLIENT_SECRET')
 
-GOONG_API_KEY = 'D6djAnuQELJE6MOHxB8WyhzLb2pQco3xvXOagCH2'
+GOONG_API_KEY = config('GOONG_API_KEY')
 
-FIREBASE_CRED_PATH = BASE_DIR / 'eventapp-1ead2-firebase-adminsdk-fbsvc-f22eb7ade7.json'
+FIREBASE_CRED_PATH = BASE_DIR / config('FIREBASE_CRED_PATH')
 cred = credentials.Certificate(FIREBASE_CRED_PATH)
 firebase_admin.initialize_app(cred)
 
 
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = config('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = config('CELERY_RESULT_BACKEND')
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
