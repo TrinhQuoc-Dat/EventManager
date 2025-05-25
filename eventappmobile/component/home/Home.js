@@ -1,109 +1,130 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
-import axios from 'axios';
-import Apis, { endpoints } from '../../configs/Apis';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  FlatListComponent,
+  Image,
+} from "react-native";
+import axios from "axios";
+import Apis, { endpoints } from "../../configs/Apis";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Chip, List, Searchbar } from "react-native-paper";
+import MyStyles from "../../styles/MyStyles";
+import { useNavigation } from "@react-navigation/native";
 
 const Home = () => {
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [q, setQ] = useState();
+  const [page, setPage] = useState(1);
+  const [cateId, setCateId] = useState(null);
+  const nav = useNavigation();
 
-  // Lấy danh sách categories từ API
-  useEffect(() => {
-    const fetchCategories = async () => {
+  const loadCates = async () => {
+    let res = await Apis.get(endpoints["categories"]);
+    setCategories(res.data);
+  };
+
+  const loadEvents = async () => {
+    if (page > 0) {
       try {
-        const response = await Apis.get(endpoints["categories"]);
-        console.log(response.data)
-        setCategories(response.data || []);
-        console.log("done");
-      } catch (err) {
-        console.error('Error fetching categories:', err.message);
-        setError('Không thể tải danh mục. Vui lòng thử lại!');
+        setLoading(true);
+        let url = `${endpoints["events"]}?page=${page}`;
+
+        if (q) {
+          url = `${url}&q=${q}`;
+        }
+
+        if (cateId) {
+          url = `${url}&category_id=${cateId}`;
+        }
+
+        let res = await Apis.get(url);
+        setEvents([...events, ...res.data.results]);
+
+        if (res.data.next === null) {
+          setPage(0);
+        }
+      } catch {
+        // console.error(ex);
       } finally {
         setLoading(false);
       }
-    };
-    fetchCategories();
+    }
+  };
+
+  const loadMore = () => {
+    if (!loading && page > 0) {
+      setPage((page) => page + 1);
+    }
+  };
+
+  const search = (value, callback) => {
+    setPage(1);
+    setEvents([]);
+    callback(value);
+  };
+
+  useEffect(() => {
+    loadCates();
   }, []);
 
-  // Render mỗi category
-  const renderCategory = ({ item }) => (
-    <TouchableOpacity style={styles.categoryItem}>
-      <Text style={styles.categoryText}>{item.name}</Text>
-    </TouchableOpacity>
-  );
+  useEffect(() => {
+    let timer = setTimeout(() => {
+      loadEvents();
+    }, 500);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#e91e63" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
-    );
-  }
+    return () => clearTimeout(timer);
+  }, [q, cateId, page]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Danh mục sự kiện</Text>
-      <FlatList
-        data={categories}
-        renderItem={renderCategory}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContainer}
+    <SafeAreaView>
+      <View style={[MyStyles.row, MyStyles.wrap]}>
+        <TouchableOpacity onPress={() => search(null, setCateId)}>
+          <Chip icon={"label"} style={MyStyles.m}>
+            Tất cả
+          </Chip>
+        </TouchableOpacity>
+
+        {categories.map((c) => (
+          <TouchableOpacity key={c.id} onPress={() => search(c.id, setCateId)}>
+            <Chip icon={"label"} style={MyStyles.m}>
+              {c.name}
+            </Chip>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <Searchbar
+        placeholder="Tìm kiếm sự kiện..."
+        value={q}
+        onChangeText={(t) => search(t, setQ)}
       />
-    </View>
+
+      <FlatList
+        style={MyStyles.p}
+        onEndReached={loadMore}
+        ListFooterComponent={loading && <ActivityIndicator />}
+        data={events}
+        renderItem={({ item }) => (
+          <List.Item
+            title={item.title}
+            description={item.start_date_time}
+            left={() => (
+              <TouchableOpacity onPress={() => nav.navigate('event-detail', {'eventId': item.id})}>
+                <Image style={MyStyles.avatar} source={{ uri: item.image }} />
+              </TouchableOpacity>
+            )}
+          />
+        )}
+      />
+    </SafeAreaView>
   );
 };
-
-// Styles
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 16,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  listContainer: {
-    paddingBottom: 16,
-  },
-  categoryItem: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  categoryText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 16,
-    color: 'red',
-    textAlign: 'center',
-  },
-});
 
 export default Home;

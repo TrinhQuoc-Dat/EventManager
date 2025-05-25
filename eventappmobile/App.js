@@ -17,6 +17,7 @@ import ScannerTicket from "./component/Payment/ScanerTicket";
 import PaymentTicket from "./component/Payment/PaymentTicket";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { navigationRef } from "./service/NavigationService";
+import CreateCategory from "./component/Event/CreateCategory";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();

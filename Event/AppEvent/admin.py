@@ -50,6 +50,11 @@ class GroupAdmin(admin.ModelAdmin):
     list_display = ['name']
     search_fields = ['name']
 
+class EventForm(forms.ModelForm):
+    description = forms.CharField(widget=CKEditorUploadingWidget)
+    class Meta:
+        model = Event
+        fields = '__all__'
 
 class EventAdmin(admin.ModelAdmin):
     list_display = ['title', 'description', 'created_date', 'start_date_time', 'location', 'view_dashboard']
@@ -57,6 +62,7 @@ class EventAdmin(admin.ModelAdmin):
     list_filter = ['category', 'created_date']
     ordering = ['-id']
     readonly_fields = ('image_view',)
+    form = EventForm
 
     def image_view(self, event):
         if event:

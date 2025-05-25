@@ -17,7 +17,11 @@ export default StyleSheet.create({
     row: {
         flexDirection: "row",
         alignItems: "center"
-    },
+    }, ticketItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 8,
+  },
     wrap: {
         flexWrap: "wrap"
     },
