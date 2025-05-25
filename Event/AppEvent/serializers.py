@@ -161,6 +161,13 @@ class PaymentTicketSerializer(ModelSerializer):
         ]
 
 
+class PaymentTicketQRCodeSerializer(ModelSerializer):
+
+    class Meta:
+        model = PaymentTicket
+        fields = ['id', 'created_date', 'qr_code' ]
+
+
 class PaymentSerializer(ModelSerializer):
     class Meta:
         model = Payment

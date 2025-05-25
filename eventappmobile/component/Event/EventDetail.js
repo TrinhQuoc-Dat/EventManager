@@ -1,21 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, ScrollView } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, Image, FlatList, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Apis, { endpoints } from '../../configs/Apis';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { navigate } from '../../service/NavigationService';
 
 const EventDetail = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const eventid = 1
 
+  // const navigation = useNavigation();
+
   // Gọi API để lấy dữ liệu sự kiện
   useEffect(() => {
     const fetchEvent = async () => {
       try {
         // const response = await axios.get('http://192.168.1.4:8000/api/event/3/');
-        const response = Apis.get(endpoints.event(eventid));
+        const response = await Apis.get(endpoints['event'](eventid));
         setEvent(response.data);
         setLoading(false);
       } catch (error) {
@@ -40,13 +44,21 @@ const EventDetail = () => {
 
   // Render mỗi loại vé
   const renderTicket = ({ item }) => (
-    <View style={styles.ticketItem}>
-      <Text style={styles.ticketName}>{item.name}</Text>
-      <Text style={styles.ticketPrice}>
-        {parseFloat(item.ticket_price).toLocaleString('vi-VN')} VNĐ
-      </Text>
-      <Text style={styles.ticketQuantity}>Số lượng: {item.so_luong}</Text>
-    </View>
+    <TouchableOpacity
+      style={styles.ticketItem}
+      onPress={() => {
+        navigate('paymentTicket', {ticket: item, event: event,});
+      }}
+      >
+      <View style={styles.ticketItem}>
+        <Text style={styles.ticketName}>{item.name}</Text>
+        <Text style={styles.ticketPrice}>
+          {parseFloat(item.ticket_price).toLocaleString('vi-VN')} VNĐ
+        </Text>
+        <Text style={styles.ticketQuantity}>Số lượng: {item.so_luong}</Text>
+      </View>
+    </TouchableOpacity>
+
   );
 
   // Render mỗi bình luận

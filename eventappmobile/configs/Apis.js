@@ -15,7 +15,12 @@ export const endpoints = {
     'event': (eventId) => `/api/event/${eventId}/`,
     'event-list': '/api/event/',
     'create-event': '/api/event/',
-    'categories': '/api/categories/'
+    'categories': '/api/categories/',
+    'payment-history': '/api/payment/history/',
+    'qr-code': '/api/payment-ticket/qr-code/',
+    'payment': '/api/payment-ticket/payment/',
+    'checkin': (qrCode) => `/checkin/${qrCode}/`,
+    'event-user': '/api/event/user/',
 };
 
 export const authApis = (token) => {

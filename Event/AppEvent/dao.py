@@ -38,9 +38,17 @@ def get_ticket_by_event(event):
     return tickets.filter(event__id=event).all()
 
 
-def get_payment_ticket():
+def get_payment_ticket(pk=None):
+    if pk is not None:
+        return PaymentTicket.objects.get(pk=pk)
     return PaymentTicket.objects.filter(active=True).all()
 
+
+def get_qr_code(user, payment_id):
+    return PaymentTicket.objects.filter(
+        payment__id=payment_id,
+        user=user
+    ).first()
 
 def get_payment_detail(user, pk):
     return PaymentTicket.objects.select_related('ticket', 'ticket__event', 'payment')\
@@ -48,7 +56,7 @@ def get_payment_detail(user, pk):
 
 
 def get_payment_by_user(user):
-    return Payment.objects.filter(user=user, active=True).all()
+    return Payment.objects.filter(paymentticket__user=user, active=True).all()
 
 
 def get_payments():

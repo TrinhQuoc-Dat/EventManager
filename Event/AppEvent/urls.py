@@ -20,6 +20,6 @@ urlpatterns = [
     path('api/auth/google/', google_auth),
     path('ticket/payment-ipn/', MomoPaymentIPNView.post, name='momo-ipn'),
     path('ticket/payment-success/', payment_success_view, name='payment-success'),
-    path('checkin/<int:payment_ticket_id>/', views.checkin_api, name='checkin'),
+    path('checkin/<str:qr_code>/', views.checkin_api, name='checkin'),
     path('', views.home, name='home'),
 ]
