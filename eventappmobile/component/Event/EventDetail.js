@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
-import { Image, ScrollView, Text, View, StyleSheet, FlatList } from "react-native";
+import {
+  Image,
+  ScrollView,
+  Text,
+  View,
+  StyleSheet,
+  FlatList,
+} from "react-native";
 import { ActivityIndicator, Button, Card, Divider } from "react-native-paper";
 import moment from "moment";
 import "moment/locale/vi";
 import Apis, { endpoints } from "../../configs/Apis";
+import RenderHTML from "react-native-render-html";
 
 const EventDetail = ({ route }) => {
   const eventId = route.params?.eventId;
@@ -31,7 +39,11 @@ const EventDetail = ({ route }) => {
     <ScrollView style={styles.container}>
       <Card style={styles.card}>
         <Card.Cover source={{ uri: event.image }} style={styles.image} />
-        <Card.Title title={event.title} titleNumberOfLines={0} titleStyle={styles.title} />
+        <Card.Title
+          title={event.title}
+          titleNumberOfLines={0}
+          titleStyle={styles.title}
+        />
         <Card.Content>
           <Text style={styles.infoText}>
             🕒 {formatDateTime(event.start_date_time, event.end_date_time)}
@@ -44,7 +56,7 @@ const EventDetail = ({ route }) => {
       <Card style={styles.card}>
         <Card.Title title="Giới thiệu" />
         <Card.Content>
-          <Text style={styles.description}>{event.description}</Text>
+          <RenderHTML source={{ html: event.description }} />
         </Card.Content>
       </Card>
 
@@ -68,6 +80,35 @@ const EventDetail = ({ route }) => {
       </Card>
 
       <Card style={styles.card}>
+        <Card.Title title="Bình luận" />
+        <Card.Content>
+          <FlatList
+            data={event.comment_set}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <View style={styles.commentItem}>
+                <Image
+                  source={{ uri: item.user.avatar }}
+                  style={styles.commentAvatar}
+                />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.commentUser}>
+                    {item.user.first_name} {item.user.last_name}
+                  </Text>
+                  <Text style={styles.commentContent}>{item.content}</Text>
+                  <Text style={styles.commentDate}>
+                    {moment(item.created_date).format("HH:mm DD/MM/YYYY")} -
+                    Đánh giá: {item.rate}/10
+                  </Text>
+                </View>
+              </View>
+            )}
+            scrollEnabled={false} // giữ cho bình luận cuộn chung với trang
+          />
+        </Card.Content>
+      </Card>
+
+      <Card style={styles.card}>
         <Card.Title title="Nhà tổ chức" />
         <Card.Content style={styles.organizerContent}>
           <Image
@@ -79,31 +120,6 @@ const EventDetail = ({ route }) => {
           </Text>
         </Card.Content>
       </Card>
-
-      <Card style={styles.card}>
-  <Card.Title title="Bình luận" />
-  <Card.Content>
-    <FlatList
-      data={event.comment_set}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => (
-        <View style={styles.commentItem}>
-          <Image source={{ uri: item.user.avatar }} style={styles.commentAvatar} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.commentUser}>
-              {item.user.first_name} {item.user.last_name}
-            </Text>
-            <Text style={styles.commentContent}>{item.content}</Text>
-            <Text style={styles.commentDate}>
-              {moment(item.created_date).format("HH:mm DD/MM/YYYY")} - Đánh giá: {item.rate}/10
-            </Text>
-          </View>
-        </View>
-      )}
-      scrollEnabled={false} // giữ cho bình luận cuộn chung với trang
-    />
-  </Card.Content>
-</Card>
     </ScrollView>
   );
 };
@@ -177,34 +193,33 @@ const styles = StyleSheet.create({
     color: "#444",
   },
   commentItem: {
-  flexDirection: "row",
-  alignItems: "flex-start",
-  marginBottom: 12,
-  paddingBottom: 12,
-  borderBottomWidth: 1,
-  borderBottomColor: "#eee",
-},
-commentAvatar: {
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  marginRight: 12,
-},
-commentUser: {
-  fontSize: 16,
-  fontWeight: "600",
-  color: "#333",
-},
-commentContent: {
-  fontSize: 14,
-  color: "#555",
-  marginVertical: 4,
-},
-commentDate: {
-  fontSize: 12,
-  color: "#888",
-},
-
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  commentAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  commentUser: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  commentContent: {
+    fontSize: 14,
+    color: "#555",
+    marginVertical: 4,
+  },
+  commentDate: {
+    fontSize: 12,
+    color: "#888",
+  },
 });
 
 export default EventDetail;

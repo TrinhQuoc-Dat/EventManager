@@ -27,23 +27,26 @@ const TabNavigator = () => {
         {user === null ? (
           <>
             <Tab.Screen
-              name="login"
-              component={Login}
+              name="home"
+              component={StackNavigator}
               options={{
-                title: "Đăng nhập",
-                tabBarIcon: () => <Icon size={30} source="account" />,
+                title: "Trang chủ",
+                tabBarIcon: ({ color, size }) => (
+                  <MaterialIcons name="home" color={color} size={size} />
+                ),
+                headerShown: false,
               }}
             />
             <Tab.Screen
-              name="register"
-              component={Resgister}
+              name="profile"
+              component={AuthStackNavigator}
               options={{
-                title: "Đăng Ký",
-                tabBarIcon: () => (
-                  <Icon size={30} source="account-plus-outline" />
-                ),
+                title: "Tài khoản",
+                tabBarIcon: () => <Icon size={30} source="account" />,
+                headerShown: false
               }}
             />
+            
           </>
         ) : (
           <>
@@ -58,26 +61,7 @@ const TabNavigator = () => {
                 headerShown: false,
               }}
             />
-            <Tab.Screen
-              name="events"
-              component={Events}
-              options={{
-                title: "Sự kiện",
-                tabBarIcon: ({ color, size }) => (
-                  <MaterialIcons name="event" color={color} size={size} />
-                ),
-              }}
-            />
-            <Tab.Screen
-              name="eventdetail"
-              component={EventDetail}
-              options={{
-                title: "Chi tiết",
-                tabBarIcon: ({ color, size }) => (
-                  <MaterialIcons name="info" color={color} size={size} />
-                ),
-              }}
-            />
+
             <Tab.Screen
               name="createvent"
               component={CreateEvent}
@@ -107,17 +91,53 @@ const TabNavigator = () => {
               }}
             />
             <Tab.Screen
-              name="login"
+              name="profile"
               component={Profile}
               options={{
                 title: "Tài khoản",
                 tabBarIcon: () => <Icon size={30} source="account" />,
+                headerShown: false
               }}
             />
           </>
         )}
       </Tab.Navigator>
     </PaperProvider>
+  );
+};
+
+const AuthStackNavigator = () => {
+  return (
+      <Stack.Navigator>
+        <Stack.Screen
+              name="profile2"
+              component={Profile}
+              options={{
+                title: "Tài khoản",
+                // tabBarIcon: () => <Icon size={30} source="account" />,
+              }}
+            />
+        <Stack.Screen
+          name="login"
+          component={Login}
+          options={{
+            title: "Đăng nhập",
+            tabBarIcon: ({ color, size }) => (
+              <MaterialIcons name="login" color={color} size={size} />
+            ),
+          }}
+        />
+        <Stack.Screen
+          name="register"
+          component={Resgister}
+          options={{
+            title: "Đăng ký",
+            tabBarIcon: ({ color, size }) => (
+              <MaterialIcons name="person-add" color={color} size={size} />
+            ),
+          }}
+        />
+      </Stack.Navigator>
   );
 };
 
@@ -140,6 +160,7 @@ const StackNavigator = () => {
           headerStyle: { backgroundColor: "#2196F3" },
         }}
       />
+      
     </Stack.Navigator>
   );
 };
@@ -147,18 +168,18 @@ const StackNavigator = () => {
 const App = () => {
   const [user, dispatch] = useReducer(MyUserReducer, null);
   return (
-    // <MyUserContext.Provider value={user}>
-    //   <MyDispatchContext.Provider value={dispatch}>
-    //     <NavigationContainer>
-    //       <TabNavigator />
-    //     </NavigationContainer>
-    //   </MyDispatchContext.Provider>
-    // </MyUserContext.Provider>
+    <MyUserContext.Provider value={user}>
+      <MyDispatchContext.Provider value={dispatch}>
+        <NavigationContainer>
+          <TabNavigator />
+        </NavigationContainer>
+      </MyDispatchContext.Provider>
+    </MyUserContext.Provider>
 
     // test bỏ quan màn hình login
-    <NavigationContainer>
-      <TabNavigator />
-    </NavigationContainer>
+    // <NavigationContainer>
+    //   <TabNavigator />
+    // </NavigationContainer>
   );
 };
 
