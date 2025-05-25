@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Chip, List, Searchbar } from "react-native-paper";
 import MyStyles from "../../styles/MyStyles";
 import { useNavigation } from "@react-navigation/native";
+import { navigate } from "../../service/NavigationService";
 
 const Home = () => {
   const [categories, setCategories] = useState([]);
@@ -116,7 +117,7 @@ const Home = () => {
             title={item.title}
             description={item.start_date_time}
             left={() => (
-              <TouchableOpacity onPress={() => nav.navigate('event-detail', {'eventId': item.id})}>
+              <TouchableOpacity onPress={() => navigate('eventdetail', {'eventId': item.id})}>
                 <Image style={MyStyles.avatar} source={{ uri: item.image }} />
               </TouchableOpacity>
             )}

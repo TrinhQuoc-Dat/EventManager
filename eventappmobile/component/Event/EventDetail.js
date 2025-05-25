@@ -13,7 +13,7 @@ import RenderHTML from "react-native-render-html";
 const EventDetail = ({ route }) => {
   const eventId = route.params?.eventId;
   const [event, setEvent] = useState(null);
-
+  const [loading, setLoading] = useState(false);
 
   // Gọi API để lấy dữ liệu sự kiện
   useEffect(() => {
