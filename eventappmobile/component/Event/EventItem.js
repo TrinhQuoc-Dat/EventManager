@@ -1,11 +1,14 @@
 import moment from 'moment';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Image, TouchableOpacity, View } from 'react-native';
 import styles from './styles';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import 'moment/locale/vi';
+import { Text } from 'react-native-paper';
 
+moment.locale('vi');
 
 const formatDateTime = (dateTime) => {
-    return moment(dateTime).format('DD/MM/YYYY HH:mm')
+    return moment(dateTime).fromNow()
 }
 
 const EventItem = ({ event }) => {
@@ -19,9 +22,9 @@ const EventItem = ({ event }) => {
                 <Text style={styles.eventTitle} >{event.title}</Text>
                 <View style={styles.infoRow}>
                     <MaterialIcons name="event" size={16} color="#555" />
-                    <View style={styles.infoText}>
+                    <Text style={styles.infoText}>
                         {formatDateTime(event.start_date_time)}
-                    </View>
+                    </Text>
                 </View>
                 <View style={styles.infoRow}>
                     <MaterialIcons name="location-on" size={16} color="#555" />

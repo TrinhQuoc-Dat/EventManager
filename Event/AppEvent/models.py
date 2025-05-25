@@ -5,6 +5,7 @@ from cloudinary.models import CloudinaryField
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from django.contrib.auth.models import BaseUserManager
+import uuid
 
 
 class UserRole(models.TextChoices):
@@ -180,8 +181,8 @@ class Payment(BaseModel):
         max_length=20,
         choices=TypePayment.choices,
         default=TypePayment.VNPAY)
-    transaction_id = models.CharField(max_length=255, null=False)
-    momo_order_id = models.CharField(max_length=255, null=False)
+    transaction_id = models.CharField(max_length=255, null=True)
+    momo_order_id = models.CharField(max_length=255, null=True)
     status = models.CharField(
         max_length=20,
         choices=StatusPayment.choices,
@@ -190,10 +191,10 @@ class Payment(BaseModel):
 
 
 class PaymentTicket(BaseModel):
-    qr_code = models.CharField(max_length=255, null=False, unique=True)
+    qr_code = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
     status = models.CharField(max_length=20, null=False, default=StatusTicket.BOOKED)
     user = models.ForeignKey(User, null=False, on_delete=models.RESTRICT)
-    ticket = models.ForeignKey(Ticket, null=False, on_delete=models.RESTRICT)
+    ticket = models.ForeignKey(TicketType, null=False, on_delete=models.RESTRICT)
     payment = models.ForeignKey(Payment, null=False, on_delete=models.RESTRICT)
 
     class Meta:

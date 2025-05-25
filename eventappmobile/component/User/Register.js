@@ -94,16 +94,20 @@ const Resgister = () => {
                 let form = new FormData();
                 let avatarUrl = null;
 
-                if (user.image) {
-                    avatarUrl = await UploadCloudinary(user.image);
-                    setState(avatarUrl, 'avatar');
-                }
+                // if (user.image) {
+                //     avatarUrl = await UploadCloudinary(user.image);
+                //     setState(avatarUrl, 'avatar');
+                // }
                 for (let key in user)
                     if (key !== 'confirm') {
                         if (key !== 'image')
                             form.append(key, user[key]);
                     }
+
+                 if (user.image) form.append(user.image, 'avatar');
                 form.append('role', role);
+
+                console.info(form);
 
                 let res = await Apis.post(endpoints['register'], form, {
                     headers: {

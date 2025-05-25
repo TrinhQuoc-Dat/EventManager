@@ -1,5 +1,7 @@
 import hashlib
 import hmac
+
+from PIL.ImagePalette import random
 from rest_framework import viewsets, generics, permissions, mixins, status, parsers
 from django.contrib.auth import authenticate
 from rest_framework.decorators import action
@@ -23,8 +25,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
 from google.auth.transport.requests import Request
 import requests
-from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from rest_framework.permissions import IsAuthenticated
+import uuid
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView):
@@ -289,7 +292,8 @@ class TicketTypeViewSet(viewsets.ModelViewSet):
         if self.action in ['create']:
             return [permissions.IsAuthenticated(), perms.IsOrganizer()]
         return [permissions.AllowAny()]
-    
+
+
 class CommentViewSet(viewsets.ViewSet, generics. DestroyAPIView, generics.UpdateAPIView):
     queryset = Comment.objects.filter(active=True)
     serializer_class = serializers.CommentSerializer
@@ -316,11 +320,62 @@ class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
                                      ipn_url=ipn_url)
         return redirect(result['payUrl'])
 
+    @action(methods=['post'], url_path="payment", detail=False)
+    def payment_view(self, request):
+        user = request.user
+        data = request.data
+        ticket_id = data.get("ticket_id")
+
+        try:
+            ticket = TicketType.objects.get(id=ticket_id)
+        except TicketType.DoesNotExist:
+            return Response({"error": "Loại vé không tồn tại."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if ticket.so_luong <= 0:
+            return Response({"error": "Vé đã hết."}, status=status.HTTP_400_BAD_REQUEST)
+
+        amount = ticket.ticket_price
+
+        # Giả định client đã thực hiện thanh toán xong, gửi về transId và orderId
+        payment = Payment.objects.create(
+            amount=amount,
+            payment_method=data.get("payment_method", "momo"),
+            transaction_id=data.get("transId", ""),
+            momo_order_id=data.get("orderId", ""),
+            status="success",
+            content=f"Thanh toán vé {ticket.name}"
+        )
+
+        payment_ticket = PaymentTicket.objects.create(
+            status="booked",
+            user=user,
+            ticket=ticket,
+            payment=payment,
+            qr_code=random()
+        )
+
+        payment_ticket.qr_code = str(uuid.uuid4())
+        payment_ticket.save()
+
+        # Trừ số lượng còn lại
+        ticket.so_luong -= 1
+        ticket.save()
+
+        return Response(serializers.PaymentTicketSerializer(payment_ticket).data, status=status.HTTP_201_CREATED)
+
     @action(methods=['get'], url_path="history", detail=True)
     def get_payment_ticket(self, request, pk):
         ticket = dao.get_payment_detail(user=request.user, pk=pk)
         if ticket:
             return Response(serializers.PaymentTicketFullSerializer(ticket).data)
+        return Response({'error': 'Không tìm thấy giao dịch'}, status=404)
+
+    @action(methods=['get'], url_path="qr-code", detail=False)
+    def get_qr_code(self, request):
+        payment_id = request.query_params.get("payment_id")
+        ticket = dao.get_qr_code(user=request.user, payment_id=payment_id)
+        if ticket:
+            return Response(serializers.PaymentTicketQRCodeSerializer(ticket).data)
         return Response({'error': 'Không tìm thấy giao dịch'}, status=404)
 
 
@@ -340,19 +395,8 @@ def payment_success_view(request):
     return render(request, "payment_success.html")
 
 
-def generate_qr_url(payment_ticket):
-    return f"{settings.DOMAIN}/ticket/checkin/{payment_ticket.id}/"
-
-
 def home(request):
     return render(request, 'home.html')
-
-
-def generate_qr_code(data: str) -> str:
-    qr = qrcode.make(data)
-    buffer = BytesIO()
-    qr.save(buffer, format='PNG')
-    return base64.b64encode(buffer.getvalue()).decode('utf-8')
 
 
 class MomoPaymentIPNView(APIView):
@@ -388,8 +432,6 @@ class MomoPaymentIPNView(APIView):
                     ticket=ticket,
                     payment=payment
                 )
-                payment_ticket.qr_code = generate_qr_code(generate_qr_url(payment_ticket.id))
-                payment_ticket.save()
 
                 return Response({"message": "Payment recorded"}, status=status.HTTP_201_CREATED)
 
@@ -400,13 +442,22 @@ class MomoPaymentIPNView(APIView):
 
 
 # kiểm tra checkin cần có domain
-@csrf_exempt
-def checkin_api(request, payment_ticket_id):
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def checkin_api(request, qr_code):
     try:
-        ticket = PaymentTicket.objects.select_related('ticket', 'user', 'ticket__event').get(pk=payment_ticket_id)
+        ticket = PaymentTicket.objects.get(qr_code=qr_code)
+        if ticket is None:
+            return JsonResponse({'message': 'Không tìm thấy vé', 'status': 'checked_in'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        if request.user.role != "organizer":
+            return JsonResponse({'message': 'Không có quyền', 'status': 'checked_in'},
+                                status=status.HTTP_403_FORBIDDEN)
 
         if ticket.status == StatusTicket.CHECKIN:
-            return JsonResponse({'message': 'Đã check-in trước đó', 'status': 'checked_in'}, status=200)
+            return JsonResponse({'message': 'Đã check-in trước đó', 'status': 'checked_in'},
+                                status=status.HTTP_200_OK)
 
         ticket.status = StatusTicket.CHECKIN
         ticket.save()
@@ -416,12 +467,12 @@ def checkin_api(request, payment_ticket_id):
             'status': ticket.status,
             'user': ticket.user.username,
             'event': ticket.ticket.event.title,
-            'ticket_type': ticket.ticket.type_ticket,
+            'ticket': ticket.ticket.name
         }
-        return JsonResponse(data, status=200)
+        return JsonResponse(data, status=status.HTTP_201_CREATED)
 
     except PaymentTicket.DoesNotExist:
-        return JsonResponse({'error': 'Không tìm thấy vé'}, status=404)
+        return Response({'error': 'Không tìm thấy vé'}, status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(['POST'])

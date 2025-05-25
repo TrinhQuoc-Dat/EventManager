@@ -1,28 +1,35 @@
-import { useEffect, useState } from "react";
-import {
-  Image,
-  ScrollView,
-  Text,
-  View,
-  StyleSheet,
-  FlatList,
-} from "react-native";
+
+import { useEffect, useState } from 'react';
+import { View, Text, Image, FlatList, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import moment from 'moment';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import Apis, { endpoints } from '../../configs/Apis';
+import { navigate } from '../../service/NavigationService';
 import { ActivityIndicator, Button, Card, Divider } from "react-native-paper";
-import moment from "moment";
 import "moment/locale/vi";
-import Apis, { endpoints } from "../../configs/Apis";
 import RenderHTML from "react-native-render-html";
+
 
 const EventDetail = ({ route }) => {
   const eventId = route.params?.eventId;
   const [event, setEvent] = useState(null);
 
+
+  // Gọi API để lấy dữ liệu sự kiện
   useEffect(() => {
-    const loadEvent = async () => {
-      let res = await Apis.get(endpoints["event"](eventId));
-      setEvent(res.data);
-    };
-    loadEvent();
+    const fetchEvent = async () => {
+      try {
+        // const response = await axios.get('http://192.168.1.4:8000/api/event/3/');
+        const response = await Apis.get(endpoints['event'](eventId));
+        setEvent(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching event:', error);
+        setLoading(false);
+      }
+    }
+
+    fetchEvent();
   }, [eventId]);
 
   const formatDateTime = (start, end) => {
@@ -32,6 +39,44 @@ const EventDetail = ({ route }) => {
     const date = moment(start).format("DD [tháng] MM, YYYY");
     return `${startTime} - ${endTime}, ${date}`;
   };
+
+  // Render mỗi loại vé
+  const renderTicket = ({ item }) => (
+    <TouchableOpacity
+      style={styles.ticketItem}
+      onPress={() => {
+        navigate('paymentTicket', { ticket: item, event: event, });
+      }}
+    >
+      <View style={styles.ticketItem}>
+        <Text style={styles.ticketName}>{item.name}</Text>
+        <Text style={styles.ticketPrice}>
+          {parseFloat(item.ticket_price).toLocaleString('vi-VN')} VNĐ
+        </Text>
+        <Text style={styles.ticketQuantity}>Số lượng: {item.so_luong}</Text>
+      </View>
+    </TouchableOpacity>
+
+  );
+
+  // Render mỗi bình luận
+  const renderComment = ({ item }) => (
+    <View style={styles.commentItem}>
+      <Image
+        source={{ uri: item.user.avatar }}
+        style={styles.commentAvatar}
+      />
+      <View style={styles.commentContent}>
+        <Text style={styles.commentUser}>
+          {item.user.first_name} {item.user.last_name}
+        </Text>
+        <Text style={styles.commentText}>{item.content}</Text>
+        <Text style={styles.commentDate}>
+          {formatDateTime(item.created_date)} - Đánh giá: {item.rate}/10
+        </Text>
+      </View>
+    </View>
+  );
 
   if (!event) return <ActivityIndicator style={{ marginTop: 32 }} />;
 
@@ -69,14 +114,16 @@ const EventDetail = ({ route }) => {
               <Text style={styles.ticketPrice}>
                 {parseFloat(t.ticket_price).toLocaleString("vi-VN")} VNĐ
               </Text>
+              <Card.Actions style={styles.ticketActions}>
+                <Button mode="contained" buttonColor="#6200ee" onPress={() => {
+                  navigate('paymentTicket', { ticket: t, event: event, });
+                }}>
+                  Đặt vé
+                </Button>
+              </Card.Actions>
             </View>
           ))}
         </Card.Content>
-        <Card.Actions style={styles.ticketActions}>
-          <Button mode="contained" buttonColor="#6200ee">
-            Đặt vé
-          </Button>
-        </Card.Actions>
       </Card>
 
       <Card style={styles.card}>
