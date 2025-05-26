@@ -214,7 +214,8 @@ class EventViewSet(viewsets.ModelViewSet):
                 serializer.save(
                     organizer=self.request.user,
                     vi_do=vi_do,
-                    kinh_do=kinh_do
+                    kinh_do=kinh_do,
+                    active=True
                 )
         except Exception as e:
             return Response({"error": f"Lỗi khi gọi Goong API: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

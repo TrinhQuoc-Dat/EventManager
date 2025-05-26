@@ -167,8 +167,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'eventdb',
         'USER': 'root',
-        # 'PASSWORD': 'Abc@123',
-        'PASSWORD': 'Admin@123',
+        'PASSWORD': 'Abc@123',
+        # 'PASSWORD': 'Admin@123',
         'HOST': ''
     }
 }

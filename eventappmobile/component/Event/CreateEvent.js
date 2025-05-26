@@ -14,102 +14,74 @@ import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { authApis, endpoints } from "../../configs/Apis";
+import Apis, { authApis, endpoints } from "../../configs/Apis";
 
 const CreateEvent = () => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [startDateTime, setStartDateTime] = useState(new Date());
-  const [endDateTime, setEndDateTime] = useState(new Date());
-  const [location, setLocation] = useState("");
-  const [locationName, setLocationName] = useState("");
-  const [category, setCategory] = useState(null);
+  const [event, setEvent] = useState({
+    title: "",
+    description: "",
+    start_date_time: new Date(),
+    end_date_time: new Date(),
+    location: "",
+    location_name: "",
+    category: null,
+    image: null,
+  });
   const [categories, setCategories] = useState([]);
-  const [image, setImage] = useState(null);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState(null);
 
-  // Lấy danh sách danh mục từ API
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await authApis(token).get(endpoints["categories"]);
-        setCategories(response.data.results || response.data);
-      } catch (error) {
-        console.error("Lỗi khi tải danh mục:", error.message);
-        Alert.alert("Lỗi", "Không thể tải danh mục!");
-      }
-    };
-    if (token) fetchCategories();
-  }, [token]);
-
   // Lấy token từ AsyncStorage
   useEffect(() => {
-    const retrieveToken = async () => {
+    const loadToken = async () => {
       try {
         const storedToken = await AsyncStorage.getItem("token");
-        console.log("Token:", storedToken);
-        if (storedToken) {
-          setToken(storedToken);
-        } else {
-          Alert.alert("Lỗi", "Không tìm thấy token. Vui lòng đăng nhập lại!");
-        }
+        setToken(storedToken);
       } catch (error) {
         console.error("Lỗi khi lấy token:", error);
-        Alert.alert("Lỗi", "Không thể lấy token từ AsyncStorage!");
       }
     };
-    retrieveToken();
+    loadToken();
+  }, []);
+
+  const loadCates = async () => {
+    try {
+      let res = await Apis.get(endpoints["categories"]);
+      setCategories(res.data);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh mục:", error);
+    }
+  };
+
+  useEffect(() => {
+    loadCates();
   }, []);
 
   // Chọn ảnh từ thư viện
   const selectImage = async () => {
-    try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Lỗi", "Cần cấp quyền truy cập thư viện ảnh!");
-        return;
+    let { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Lỗi", "Quyền truy cập thư viện ảnh bị từ chối!");
+    } else {
+      const result = await ImagePicker.launchImageLibraryAsync();
+
+      if (!result.canceled) {
+        setEvent((prev) => ({ ...prev, image: result.assets[0].uri }));
       }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 0.5, // Giảm chất lượng để tăng tốc tải
-      });
-
-      console.log("Chọn ảnh:", result);
-
-      if (result.canceled) {
-        console.log("Người dùng hủy chọn ảnh");
-      } else if (result.assets && result.assets.length > 0) {
-        const selectedImage = result.assets[0];
-        console.log("Ảnh đã chọn:", {
-          uri: selectedImage.uri,
-          type: selectedImage.type,
-          fileName: selectedImage.fileName,
-          fileSize: selectedImage.fileSize,
-        });
-        setImage(selectedImage);
-      } else {
-        Alert.alert("Lỗi", "Không có ảnh được chọn.");
-      }
-    } catch (error) {
-      console.error("Lỗi khi chọn ảnh:", error);
-      Alert.alert("Lỗi", "Đã xảy ra lỗi khi chọn ảnh: " + error.message);
     }
   };
 
   // Xử lý khi chọn ngày/giờ bắt đầu
   const handleConfirmStart = (date) => {
-    setStartDateTime(date);
+    setEvent((prev) => ({ ...prev, start_date_time: date }));
     setShowStartPicker(false);
   };
 
   // Xử lý khi chọn ngày/giờ kết thúc
   const handleConfirmEnd = (date) => {
-    setEndDateTime(date);
+    setEvent((prev) => ({ ...prev, end_date_time: date }));
     setShowEndPicker(false);
   };
 
@@ -119,9 +91,21 @@ const CreateEvent = () => {
     setShowEndPicker(false);
   };
 
-  // Gửi dữ liệu lên API
+  // Gửi dữ liệu lên API với FormData
   const handleCreateEvent = async () => {
-    if (!title || !description || !location || !locationName || !category) {
+    const {
+      title,
+      description,
+      location,
+      location_name,
+      category,
+      start_date_time,
+      end_date_time,
+      image,
+    } = event;
+
+    // Kiểm tra dữ liệu đầu vào
+    if (!title || !description || !location || !location_name || !category) {
       Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin!");
       return;
     }
@@ -131,58 +115,61 @@ const CreateEvent = () => {
       return;
     }
 
-    if (endDateTime <= startDateTime) {
+    if (end_date_time <= start_date_time) {
       Alert.alert("Lỗi", "Thời gian kết thúc phải sau thời gian bắt đầu!");
       return;
     }
 
     setLoading(true);
     try {
+      // Tạo FormData
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
-      formData.append("start_date_time", startDateTime.toISOString());
-      formData.append("end_date_time", endDateTime.toISOString());
+      formData.append("start_date_time", start_date_time.toISOString());
+      formData.append("end_date_time", end_date_time.toISOString());
       formData.append("location", location);
-      formData.append("location_name", locationName);
+      formData.append("location_name", location_name);
       formData.append("category", category);
 
+      // Thêm ảnh vào FormData nếu có
       if (image) {
+        const uriParts = image.split(".");
+        const fileType = uriParts[uriParts.length - 1];
         formData.append("image", {
-          uri: image.uri,
-          type: image.type || "image/jpeg",
-          name: image.fileName || `event_image_${Date.now()}.jpg`,
-        });
-        console.log("Gửi ảnh trong FormData:", {
-          uri: image.uri,
-          type: image.type || "image/jpeg",
-          name: image.fileName || `event_image_${Date.now()}.jpg`,
+          uri: image,
+          name: `event_image.${fileType}`,
+          type: `image/${fileType}`,
         });
       }
 
-      console.log("Gửi yêu cầu đến:", endpoints["create-event"]);
       console.log("Dữ liệu FormData:", formData);
-      console.log("Token:", token);
 
-      const response = await authApis(token).post(endpoints["create-event"], formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        timeout: 15000,
-      });
+      // Gửi yêu cầu POST với FormData
+      const response = await authApis(token).post(
+        endpoints["events"],
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       Alert.alert("Thành công", "Sự kiện đã được tạo thành công!");
       console.log("Sự kiện đã tạo:", response.data);
 
       // Reset form
-      setTitle("");
-      setDescription("");
-      setStartDateTime(new Date());
-      setEndDateTime(new Date());
-      setLocation("");
-      setLocationName("");
-      setCategory(null);
-      setImage(null);
+      setEvent({
+        title: "",
+        description: "",
+        start_date_time: new Date(),
+        end_date_time: new Date(),
+        location: "",
+        location_name: "",
+        category: null,
+        image: null,
+      });
     } catch (error) {
       console.error("Chi tiết lỗi:", {
         message: error.message,
@@ -192,7 +179,9 @@ const CreateEvent = () => {
       });
       Alert.alert(
         "Lỗi",
-        `Không thể tạo sự kiện. Mã lỗi: ${error.response?.status || "N/A"} - ${error.message}`
+        `Không thể tạo sự kiện. Mã lỗi: ${error.response?.status || "N/A"} - ${
+          error.message
+        }`
       );
     } finally {
       setLoading(false);
@@ -204,25 +193,30 @@ const CreateEvent = () => {
       <Text style={styles.label}>Tiêu đề</Text>
       <TextInput
         style={styles.input}
-        value={title}
-        onChangeText={setTitle}
+        value={event.title}
+        onChangeText={(text) => setEvent((prev) => ({ ...prev, title: text }))}
         placeholder="Nhập tiêu đề sự kiện"
       />
 
       <Text style={styles.label}>Mô tả</Text>
       <TextInput
         style={[styles.input, styles.textArea]}
-        value={description}
-        onChangeText={setDescription}
+        value={event.description}
+        onChangeText={(text) =>
+          setEvent((prev) => ({ ...prev, description: text }))
+        }
         placeholder="Nhập mô tả sự kiện"
         multiline
         numberOfLines={4}
       />
 
       <Text style={styles.label}>Thời gian bắt đầu</Text>
-      <Button title="Chọn thời gian bắt đầu" onPress={() => setShowStartPicker(true)} />
+      <Button
+        title="Chọn thời gian bắt đầu"
+        onPress={() => setShowStartPicker(true)}
+      />
       <Text style={styles.dateText}>
-        {startDateTime.toLocaleString("vi-VN", {
+        {event.start_date_time.toLocaleString("vi-VN", {
           day: "2-digit",
           month: "2-digit",
           year: "numeric",
@@ -233,7 +227,7 @@ const CreateEvent = () => {
       <DateTimePickerModal
         isVisible={showStartPicker}
         mode="datetime"
-        date={startDateTime}
+        date={event.start_date_time}
         onConfirm={handleConfirmStart}
         onCancel={handleCancel}
         minimumDate={new Date()}
@@ -244,9 +238,12 @@ const CreateEvent = () => {
       />
 
       <Text style={styles.label}>Thời gian kết thúc</Text>
-      <Button title="Chọn thời gian kết thúc" onPress={() => setShowEndPicker(true)} />
+      <Button
+        title="Chọn thời gian kết thúc"
+        onPress={() => setShowEndPicker(true)}
+      />
       <Text style={styles.dateText}>
-        {endDateTime.toLocaleString("vi-VN", {
+        {event.end_date_time.toLocaleString("vi-VN", {
           day: "2-digit",
           month: "2-digit",
           year: "numeric",
@@ -257,10 +254,10 @@ const CreateEvent = () => {
       <DateTimePickerModal
         isVisible={showEndPicker}
         mode="datetime"
-        date={endDateTime}
+        date={event.end_date_time}
         onConfirm={handleConfirmEnd}
         onCancel={handleCancel}
-        minimumDate={startDateTime}
+        minimumDate={event.start_date_time}
         is24Hour={true}
         locale="vi-VN"
         confirmText="Xác nhận"
@@ -270,23 +267,29 @@ const CreateEvent = () => {
       <Text style={styles.label}>Địa điểm</Text>
       <TextInput
         style={styles.input}
-        value={location}
-        onChangeText={setLocation}
+        value={event.location}
+        onChangeText={(text) =>
+          setEvent((prev) => ({ ...prev, location: text }))
+        }
         placeholder="Nhập địa điểm (địa chỉ đầy đủ)"
       />
 
       <Text style={styles.label}>Tên địa điểm</Text>
       <TextInput
         style={styles.input}
-        value={locationName}
-        onChangeText={setLocationName}
+        value={event.location_name}
+        onChangeText={(text) =>
+          setEvent((prev) => ({ ...prev, location_name: text }))
+        }
         placeholder="Nhập tên địa điểm (ví dụ: Viettel Tower)"
       />
 
       <Text style={styles.label}>Danh mục</Text>
       <Picker
-        selectedValue={category}
-        onValueChange={(itemValue) => setCategory(itemValue)}
+        selectedValue={event.category}
+        onValueChange={(itemValue) =>
+          setEvent((prev) => ({ ...prev, category: itemValue }))
+        }
         style={styles.picker}
         enabled={categories.length > 0}
       >
@@ -304,7 +307,9 @@ const CreateEvent = () => {
       >
         <Text style={styles.imageButtonText}>Chọn ảnh đại diện...</Text>
       </TouchableOpacity>
-      {image && <Image source={{ uri: image.uri }} style={styles.imagePreview} />}
+      {event.image && (
+        <Image source={{ uri: event.image }} style={styles.imagePreview} />
+      )}
 
       <View style={styles.buttonContainer}>
         <Button
