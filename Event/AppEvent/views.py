@@ -149,22 +149,12 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
         })
 
 
-class EventViewSet(viewsets.ModelViewSet):
+class EventViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView, generics. UpdateAPIView, generics.DestroyAPIView):
     queryset = dao.get_events()
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
     pagination_class = paginations.EventSetPagination
 
-    @action(methods=['get'], url_path='user', detail=False)
-    def get_event_user(self, request):
-        user = request.user
-        events = Event.objects.filter(organizer=user)
-        page = self.paginate_queryset(events)
-        if page is not None:
-            serializer = serializers.EventSerializer(page, many=True, context={'request': request})
-            return self.get_paginated_response(serializer.data)
-
-        serializer = serializers.EventSerializer(events, many=True, context={'request': request})
-        return Response(serializer.data)
+    
 
     def get_queryset(self):
         query = self.queryset
@@ -180,14 +170,22 @@ class EventViewSet(viewsets.ModelViewSet):
         return query
 
     def get_serializer_class(self):
-        if self.action in ['retrieve', 'create', 'update', 'destroy', 'get_comments']:
-            return serializers.EventDetailSerializer
-        return serializers.EventSerializer
+        if self.action in ['get_event_user']:
+            return serializers.EventSerializer
+        if self.action in ['get_ticket_by_event']:
+            return serializers.TicketSerializer
+        if self.action in ['get_comments']:
+            return serializers.CommentSerializer
+        if self.action in ['get_ticket_types']:
+            return serializers.TicketTypeSerializer
+        if self.action in ['list']:
+            return serializers.EventSerializer
+        return serializers.EventDetailSerializer
     
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.request.method.__eq__('GET'):
             return [permissions.AllowAny()]
-        elif self.action in ['create', 'update', 'destroy', 'get_ticket_by_event']:
+        elif self.action in ['create', 'update', 'partial_update', 'destroy', 'get_ticket_by_event']:
             return [permissions.IsAuthenticated(), perms.IsOrganizer()]  
         elif self.action in ['get_comments'] and self.request.method.__eq__('POST'):
             return [permissions.IsAuthenticated(), perms.OwnerAuthenticated()]
@@ -245,7 +243,8 @@ class EventViewSet(viewsets.ModelViewSet):
                 with transaction.atomic():
                     serializer.save(
                         vi_do=vi_do,
-                        kinh_do=kinh_do
+                        kinh_do=kinh_do,
+                        active=True
                     )
             except requests.RequestException as e:
                 return Response({"error": f"Lỗi khi gọi Goong API: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -254,7 +253,19 @@ class EventViewSet(viewsets.ModelViewSet):
         else:
             # Nếu location không thay đổi, chỉ lưu các trường khác
             with transaction.atomic():
-                serializer.save()
+                serializer.save(active=True)
+
+    @action(methods=['get'], url_path='user', detail=False)
+    def get_event_user(self, request):
+        user = request.user
+        events = Event.objects.filter(organizer=user)
+        page = self.paginate_queryset(events)
+        if page is not None:
+            serializer = serializers.EventSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
+        serializer = serializers.EventSerializer(events, many=True, context={'request': request})
+        return Response(serializer.data)
 
     @action(methods=['get'], url_path="tickets", detail=True)
     def get_ticket_by_event(self, request, pk):
@@ -276,6 +287,25 @@ class EventViewSet(viewsets.ModelViewSet):
         else:
             comments = self.get_object().comment_set.select_related('user').filter(active=True)
             return Response(serializers.CommentSerializer(comments, many=True).data, status=status.HTTP_200_OK)
+        
+    @action(methods=['get', 'post'], detail=True, url_path='ticket-types')
+    def get_ticket_types(self, request, pk):
+        if request.method.__eq__('POST'):
+            u = serializers.TicketTypeSerializer(data={
+                'name': request.data.get('name'),
+                'ticket_price': request.data.get('ticket_price'),
+                'so_luong': request.data.get('so_luong'),
+                'event': pk
+            })
+            u.is_valid(raise_exception=True)
+            c = u.save()
+            return Response(serializers.TicketTypeSerializer(c).data, status=status.HTTP_201_CREATED)
+        else:
+            ticket_types = self.get_object().ticket_types.select_related('event').filter(active=True)
+            return Response(serializers.TicketTypeSerializer(ticket_types, many=True).data, status=status.HTTP_200_OK)
+
+
+
 
 
 class TicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.CreateAPIView, generics.ListAPIView):
@@ -285,14 +315,11 @@ class TicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.CreateA
     serializer_class = serializers.TicketSerializer
 
 
-class TicketTypeViewSet(viewsets.ModelViewSet):
+class TicketTypeViewSet(viewsets.ViewSet, generics. DestroyAPIView, generics.UpdateAPIView):
     queryset = TicketType.objects.filter(active=True)
     serializer_class = serializers.TicketTypeSerializer
+    permission_classes = [perms.IsOrganizer()]
 
-    def get_permissions(self):
-        if self.action in ['create']:
-            return [permissions.IsAuthenticated(), perms.IsOrganizer()]
-        return [permissions.AllowAny()]
 
 
 class CommentViewSet(viewsets.ViewSet, generics. DestroyAPIView, generics.UpdateAPIView):

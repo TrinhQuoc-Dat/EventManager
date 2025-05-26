@@ -9,12 +9,15 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  SafeAreaView,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
+import { Icon } from "react-native-paper";
+import { navigate } from "../../service/NavigationService";
 
 const CreateEvent = () => {
   const [event, setEvent] = useState({
@@ -34,17 +37,17 @@ const CreateEvent = () => {
   const [token, setToken] = useState(null);
 
   // Lấy token từ AsyncStorage
-  useEffect(() => {
-    const loadToken = async () => {
-      try {
-        const storedToken = await AsyncStorage.getItem("token");
-        setToken(storedToken);
-      } catch (error) {
-        console.error("Lỗi khi lấy token:", error);
-      }
-    };
-    loadToken();
-  }, []);
+  // useEffect(() => {
+  //   const loadToken = async () => {
+  //     try {
+  //       const storedToken = await AsyncStorage.getItem("token");
+  //       setToken(storedToken);
+  //     } catch (error) {
+  //       console.error("Lỗi khi lấy token:", error);
+  //     }
+  //   };
+  //   loadToken();
+  // }, []);
 
   const loadCates = async () => {
     try {
@@ -59,7 +62,6 @@ const CreateEvent = () => {
     loadCates();
   }, []);
 
-  // Chọn ảnh từ thư viện
   const selectImage = async () => {
     let { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
@@ -104,6 +106,8 @@ const CreateEvent = () => {
       image,
     } = event;
 
+    const token = await AsyncStorage.getItem("token");
+
     // Kiểm tra dữ liệu đầu vào
     if (!title || !description || !location || !location_name || !category) {
       Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin!");
@@ -122,7 +126,6 @@ const CreateEvent = () => {
 
     setLoading(true);
     try {
-      // Tạo FormData
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
@@ -170,6 +173,10 @@ const CreateEvent = () => {
         category: null,
         image: null,
       });
+
+      navigate("createtickettype", {
+        eventId: response.data.id // Hoặc truyền toàn bộ dữ liệu sự kiện
+      });
     } catch (error) {
       console.error("Chi tiết lỗi:", {
         message: error.message,
@@ -188,8 +195,10 @@ const CreateEvent = () => {
     }
   };
 
+
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container}>
+    <ScrollView >
       <Text style={styles.label}>Tiêu đề</Text>
       <TextInput
         style={styles.input}
@@ -311,15 +320,15 @@ const CreateEvent = () => {
         <Image source={{ uri: event.image }} style={styles.imagePreview} />
       )}
 
-      <View style={styles.buttonContainer}>
-        <Button
-          title={loading ? "Đang tạo..." : "Tạo sự kiện"}
-          onPress={handleCreateEvent}
-          disabled={loading || !token}
-          color="#e91e63"
-        />
-      </View>
+      <TouchableOpacity
+        style={styles.customButton}
+        onPress={handleCreateEvent}
+        disabled={loading}
+      >
+        <Text style={styles.imageButtonText}>{loading ? "Đang tạo..." : "Tạo sự kiện   -->"}</Text>
+      </TouchableOpacity>
     </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -379,7 +388,15 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginVertical: 16,
-  },
+  }, customButton: {
+    flexDirection: 'row',
+    backgroundColor: '#e91e63',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    opacity: 1, // Có thể set về 0.6 nếu disabled
+  }
 });
 
 export default CreateEvent;

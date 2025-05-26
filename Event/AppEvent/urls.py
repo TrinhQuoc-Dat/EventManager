@@ -12,7 +12,7 @@ router.register('event', views.EventViewSet, basename='event')
 router.register('ticket', views.TicketViewSet, basename='ticket')
 router.register('payment-ticket', views.PaymentTicketViewSet, basename='payment-ticket')
 router.register('payment', views.PaymentViesSet, basename='payment')
-router.register('ticket-types', views.TicketTypeViewSet, basename='ticket-type')
+# router.register('ticket-types', views.TicketTypeViewSet, basename='ticket-type')
 router.register('comments', views.CommentViewSet, basename='comment')
 
 urlpatterns = [

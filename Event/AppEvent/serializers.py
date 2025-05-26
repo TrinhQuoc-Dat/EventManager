@@ -98,10 +98,6 @@ class EventDetailSerializer(ItemSerializer):
         model = Event
         fields = '__all__'
         read_only_fields  = ['organizer']
-        # fields = ['id', 'title', 'description', 'start_date_time',
-        #           'end_date_time', 'image', 'location', 'location_name',
-        #           'kinh_do', 'vi_do', 'category_id', 
-        #           'organizer', 'ticket_types']
 
 class CommentUserSerializer(ModelSerializer):
     def to_representation(self, instance):

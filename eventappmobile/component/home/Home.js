@@ -84,7 +84,7 @@ const Home = () => {
   }, [q, cateId, page]);
 
   return (
-    <SafeAreaView>
+    <SafeAreaView >
       <View style={[MyStyles.row, MyStyles.wrap]}>
         <TouchableOpacity onPress={() => search(null, setCateId)}>
           <Chip icon={"label"} style={MyStyles.m}>
