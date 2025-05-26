@@ -161,6 +161,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     opacity: 1, // Có thể set về 0.6 nếu disabled
+    justifyContent: 'center',
+    marginTop: 15
   }
 });
 

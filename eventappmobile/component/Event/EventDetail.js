@@ -1,25 +1,25 @@
-
 import { useEffect, useState } from 'react';
-import { View, Text, Image, FlatList, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Image, FlatList, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import moment from 'moment';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import Apis, { endpoints } from '../../configs/Apis';
+import Apis, { authApis, endpoints } from '../../configs/Apis';
 import { navigate } from '../../service/NavigationService';
 import { ActivityIndicator, Button, Card, Divider } from "react-native-paper";
 import "moment/locale/vi";
 import RenderHTML from "react-native-render-html";
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const EventDetail = ({ route }) => {
   const eventId = route.params?.eventId;
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(false);
-
+  const [commentContent, setCommentContent] = useState('');
+  const [commentRate, setCommentRate] = useState('');
+  
   // Gọi API để lấy dữ liệu sự kiện
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        // const response = await axios.get('http://192.168.1.4:8000/api/event/3/');
         const response = await Apis.get(endpoints['event'](eventId));
         setEvent(response.data);
         setLoading(false);
@@ -40,12 +40,50 @@ const EventDetail = ({ route }) => {
     return `${startTime} - ${endTime}, ${date}`;
   };
 
+  // Hàm gửi bình luận
+  const postComment = async () => {
+    if (!commentContent.trim()) {
+      Alert.alert('Lỗi', 'Vui lòng nhập nội dung bình luận');
+      return;
+    }
+    if (!commentRate || isNaN(commentRate) || commentRate < 1 || commentRate > 10) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đánh giá từ 1 đến 10');
+      return;
+    }
+
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        Alert.alert('Lỗi', 'Vui lòng đăng nhập để bình luận');
+        return;
+      }
+
+      const response = await authApis(token).post(endpoints['post-comment'](eventId), {
+        content: commentContent,
+        rate: parseInt(commentRate),
+        event: eventId
+      });
+
+      // Cập nhật danh sách bình luận
+      setEvent(prev => ({
+        ...prev,
+        comment_set: [response.data, ...prev.comment_set]
+      }));
+      setCommentContent('');
+      setCommentRate('');
+      Alert.alert('Thành công', 'Bình luận đã được đăng');
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      Alert.alert('Lỗi', 'Không thể đăng bình luận. Vui lòng thử lại.');
+    }
+  };
+
   // Render mỗi loại vé
   const renderTicket = ({ item }) => (
     <TouchableOpacity
       style={styles.ticketItem}
       onPress={() => {
-        navigate('paymentTicket', { ticket: item, event: event, });
+        navigate('paymentTicket', { ticket: item, event: event });
       }}
     >
       <View style={styles.ticketItem}>
@@ -56,7 +94,6 @@ const EventDetail = ({ route }) => {
         <Text style={styles.ticketQuantity}>Số lượng: {item.so_luong}</Text>
       </View>
     </TouchableOpacity>
-
   );
 
   // Render mỗi bình luận
@@ -116,7 +153,7 @@ const EventDetail = ({ route }) => {
               </Text>
               <Card.Actions style={styles.ticketActions}>
                 <Button mode="contained" buttonColor="#6200ee" onPress={() => {
-                  navigate('paymentTicket', { ticket: t, event: event, });
+                  navigate('paymentTicket', { ticket: t, event: event });
                 }}>
                   Đặt vé
                 </Button>
@@ -129,6 +166,32 @@ const EventDetail = ({ route }) => {
       <Card style={styles.card}>
         <Card.Title title="Bình luận" />
         <Card.Content>
+          <View style={styles.commentInputContainer}>
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Nhập bình luận của bạn..."
+              value={commentContent}
+              onChangeText={setCommentContent}
+              multiline
+            />
+            <View style={styles.rateInputContainer}>
+              <TextInput
+                style={styles.rateInput}
+                placeholder="Đánh giá (1-10)"
+                value={commentRate}
+                onChangeText={setCommentRate}
+                keyboardType="numeric"
+              />
+              <Button
+                mode="contained"
+                buttonColor="#6200ee"
+                onPress={postComment}
+                style={styles.commentButton}
+              >
+                Đăng
+              </Button>
+            </View>
+          </View>
           <FlatList
             data={event.comment_set}
             keyExtractor={(item) => item.id.toString()}
@@ -150,7 +213,7 @@ const EventDetail = ({ route }) => {
                 </View>
               </View>
             )}
-            scrollEnabled={false} // giữ cho bình luận cuộn chung với trang
+            scrollEnabled={false}
           />
         </Card.Content>
       </Card>
@@ -266,6 +329,38 @@ const styles = StyleSheet.create({
   commentDate: {
     fontSize: 12,
     color: "#888",
+  },
+  commentInputContainer: {
+    marginBottom: 16,
+  },
+  commentInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 8,
+    backgroundColor: "#fff",
+  },
+  rateInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  rateInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    color: "#333",
+    flex: 1,
+    marginRight: 8,
+    backgroundColor: "#fff",
+  },
+  commentButton: {
+    flex: 0.4,
   },
 });
 

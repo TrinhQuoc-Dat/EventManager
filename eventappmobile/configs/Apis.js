@@ -24,7 +24,8 @@ export const endpoints = {
     'event-user': '/api/event/user/',
     'events': '/api/event/',
     'categories': '/api/categories/',
-    'create-ticket-types': (eventId) => `/api/event/${eventId}/ticket-types/`
+    'create-ticket-types': (eventId) => `/api/event/${eventId}/ticket-types/`,
+    'post-comment': (eventId) => `/api/event/${eventId}/comments/`
 
 };
 

@@ -8,10 +8,11 @@ import {
   ActivityIndicator,
   FlatListComponent,
   Image,
+  ScrollView,
 } from "react-native";
 import axios from "axios";
 import Apis, { endpoints } from "../../configs/Apis";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native";
 import { Chip, List, Searchbar } from "react-native-paper";
 import MyStyles from "../../styles/MyStyles";
 import { useNavigation } from "@react-navigation/native";
@@ -84,8 +85,8 @@ const Home = () => {
   }, [q, cateId, page]);
 
   return (
-    <SafeAreaView >
-      <View style={[MyStyles.row, MyStyles.wrap]}>
+    <SafeAreaView>
+      <ScrollView horizontal={true}>
         <TouchableOpacity onPress={() => search(null, setCateId)}>
           <Chip icon={"label"} style={MyStyles.m}>
             Tất cả
@@ -94,12 +95,12 @@ const Home = () => {
 
         {categories.map((c) => (
           <TouchableOpacity key={c.id} onPress={() => search(c.id, setCateId)}>
-            <Chip icon={"label"} style={MyStyles.m}>
+            <Chip icon={"label"} style={[MyStyles.m]}>
               {c.name}
             </Chip>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
       <Searchbar
         placeholder="Tìm kiếm sự kiện..."
