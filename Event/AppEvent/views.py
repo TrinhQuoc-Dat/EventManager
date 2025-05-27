@@ -6,7 +6,7 @@ from rest_framework import viewsets, generics, permissions, mixins, status, pars
 from django.contrib.auth import authenticate
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Category, Event, Comment, Ticket, User, PaymentTicket, Payment, StatusPayment,TypePayment, StatusTicket,StatusNotification, TicketType
+from .models import Category, EventDate, Event, Comment, Ticket, User, PaymentTicket, Payment, StatusPayment,TypePayment, StatusTicket,StatusNotification, TicketType
 from AppEvent import dao, serializers, paginations, perms
 from django.shortcuts import redirect
 from AppEvent.payment import create_momo_payment
@@ -28,6 +28,7 @@ import requests
 from django.db import transaction
 from rest_framework.permissions import IsAuthenticated
 import uuid
+from django.utils import timezone
 
 
 class CategoryViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIView, generics.CreateAPIView):
@@ -176,8 +177,10 @@ class EventViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
             return serializers.TicketSerializer
         if self.action in ['get_comments']:
             return serializers.CommentSerializer
-        if self.action in ['get_ticket_types']:
+        if self.action in ['add_ticket_type']:
             return serializers.TicketTypeSerializer
+        if self.action in ['add_event_date']:
+            return serializers.EventDateSerializer
         if self.action in ['list']:
             return serializers.EventSerializer
         return serializers.EventDetailSerializer
@@ -185,7 +188,7 @@ class EventViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
     def get_permissions(self):
         if self.request.method.__eq__('GET'):
             return [permissions.AllowAny()]
-        elif self.action in ['create', 'update', 'partial_update', 'destroy', 'get_ticket_by_event']:
+        elif self.action in ['create', 'update', 'partial_update', 'destroy', 'get_ticket_by_event', 'add_event_date', 'add_ticket_type']:
             return [permissions.IsAuthenticated(), perms.IsOrganizer()]  
         elif self.action in ['get_comments'] and self.request.method.__eq__('POST'):
             return [permissions.IsAuthenticated(), perms.OwnerAuthenticated()]
@@ -209,12 +212,20 @@ class EventViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
             kinh_do = coordinates['lng']
 
             with transaction.atomic():
-                serializer.save(
+                event = serializer.save(
                     organizer=self.request.user,
                     vi_do=vi_do,
                     kinh_do=kinh_do,
                     active=True
                 )
+                event_dates = self.request.data.get('event_dates', [])
+                for date_data in event_dates:
+                    EventDate.objects.create(
+                        event=event,
+                        event_date=date_data['event_date'],
+                        start_time=date_data['start_time'],
+                        end_time=date_data['end_time']
+                    )
         except Exception as e:
             return Response({"error": f"Lỗi khi gọi Goong API: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -255,6 +266,35 @@ class EventViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
             with transaction.atomic():
                 serializer.save(active=True)
 
+    @action(methods=['post'], detail=True, url_path='add-date')
+    def add_event_date(self, request, pk):
+        event = self.get_object()
+        serializer = serializers.EventDateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(event=event)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['post'], detail=True, url_path='add-ticket-type')
+    def add_ticket_type(self, request, pk):
+        event = self.get_object()
+        event_date_id = request.data.get('event_date_id')
+        try:
+            event_date = EventDate.objects.get(id=event_date_id, event=event)
+        except EventDate.DoesNotExist:
+            return Response({"error": "Ngày sự kiện không hợp lệ"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = serializers.TicketTypeSerializer(data={
+            'name': request.data.get('name'),
+            'ticket_price': request.data.get('ticket_price'),
+            'so_luong': request.data.get('so_luong'),
+            'event_date': event_date.id
+        })
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     @action(methods=['get'], url_path='user', detail=False)
     def get_event_user(self, request):
         user = request.user
@@ -269,8 +309,12 @@ class EventViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
 
     @action(methods=['get'], url_path="tickets", detail=True)
     def get_ticket_by_event(self, request, pk):
-        tickets = dao.get_ticket_by_event(pk)
-        return Response(serializers.TicketSerializer(tickets, many=True).data)
+        event_date_id = request.query_params.get('event_date_id')
+        if event_date_id:
+            tickets = TicketType.objects.filter(event_date_id=event_date_id, active=True)
+        else:
+            tickets = TicketType.objects.filter(event_date__event_id=pk, active=True)
+        return Response(serializers.TicketTypeSerializer(tickets, many=True).data)
 
     @action(methods=['get', 'post'], detail=True, url_path='comments')
     def get_comments(self, request, pk):
@@ -288,21 +332,21 @@ class EventViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
             comments = self.get_object().comment_set.select_related('user').filter(active=True)
             return Response(serializers.CommentSerializer(comments, many=True).data, status=status.HTTP_200_OK)
         
-    @action(methods=['get', 'post'], detail=True, url_path='ticket-types')
-    def get_ticket_types(self, request, pk):
-        if request.method.__eq__('POST'):
-            u = serializers.TicketTypeSerializer(data={
-                'name': request.data.get('name'),
-                'ticket_price': request.data.get('ticket_price'),
-                'so_luong': request.data.get('so_luong'),
-                'event': pk
-            })
-            u.is_valid(raise_exception=True)
-            c = u.save()
-            return Response(serializers.TicketTypeSerializer(c).data, status=status.HTTP_201_CREATED)
-        else:
-            ticket_types = self.get_object().ticket_types.select_related('event').filter(active=True)
-            return Response(serializers.TicketTypeSerializer(ticket_types, many=True).data, status=status.HTTP_200_OK)
+    # @action(methods=['get', 'post'], detail=True, url_path='ticket-types')
+    # def get_ticket_types(self, request, pk):
+    #     if request.method.__eq__('POST'):
+    #         u = serializers.TicketTypeSerializer(data={
+    #             'name': request.data.get('name'),
+    #             'ticket_price': request.data.get('ticket_price'),
+    #             'so_luong': request.data.get('so_luong'),
+    #             'event': pk
+    #         })
+    #         u.is_valid(raise_exception=True)
+    #         c = u.save()
+    #         return Response(serializers.TicketTypeSerializer(c).data, status=status.HTTP_201_CREATED)
+    #     else:
+    #         ticket_types = self.get_object().ticket_types.select_related('event').filter(active=True)
+    #         return Response(serializers.TicketTypeSerializer(ticket_types, many=True).data, status=status.HTTP_200_OK)
 
 
 
@@ -483,6 +527,12 @@ def checkin_api(request, qr_code):
             return JsonResponse({'message': 'Không có quyền', 'status': 'checked_in'},
                                 status=status.HTTP_403_FORBIDDEN)
 
+        # Kiểm tra ngày của vé
+        event_date = ticket.ticket.event_date.event_date
+        if event_date != timezone.now().date():
+            return JsonResponse({'message': 'Vé không hợp lệ cho ngày hôm nay', 'status': 'invalid_date'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
         if ticket.status == StatusTicket.CHECKIN:
             return JsonResponse({'message': 'Đã check-in trước đó', 'status': 'checked_in'},
                                 status=status.HTTP_200_OK)
@@ -494,14 +544,14 @@ def checkin_api(request, qr_code):
             'message': 'Check-in thành công',
             'status': ticket.status,
             'user': ticket.user.username,
-            'event': ticket.ticket.event.title,
-            'ticket': ticket.ticket.name
+            'event': ticket.ticket.event_date.event.title,
+            'ticket': ticket.ticket.name,
+            'event_date': ticket.ticket.event_date.event_date
         }
         return JsonResponse(data, status=status.HTTP_201_CREATED)
 
     except PaymentTicket.DoesNotExist:
         return Response({'error': 'Không tìm thấy vé'}, status=status.HTTP_404_NOT_FOUND)
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

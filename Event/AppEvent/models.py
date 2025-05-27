@@ -77,8 +77,8 @@ class Category(BaseModel):
 class Event(BaseModel):
     title = models.CharField(max_length=100, null=False)
     description = models.TextField()
-    start_date_time = models.DateTimeField()
-    end_date_time = models.DateTimeField()
+    # start_date_time = models.DateTimeField()
+    # end_date_time = models.DateTimeField()
     image = CloudinaryField(null=False)
     location = models.CharField(max_length=255, null=False)
     location_name = models.CharField(max_length=255, null=False)
@@ -90,6 +90,19 @@ class Event(BaseModel):
 
     def __str__(self):
         return self.title
+
+class EventDate(BaseModel):
+    event = models.ForeignKey(Event, null=False, on_delete=models.CASCADE, related_name='event_dates')
+    event_date = models.DateField(null=False)  # Ngày cụ thể của sự kiện
+    start_time = models.TimeField(null=False)  # Giờ bắt đầu trong ngày
+    end_time = models.TimeField(null=False)    # Giờ kết thúc trong ngày
+
+    class Meta:
+        unique_together = ('event', 'event_date')  # Đảm bảo mỗi ngày chỉ có một bản ghi cho sự kiện
+        ordering = ['event_date']
+
+    def __str__(self):
+        return f"{self.event.title} - {self.event_date}"
 
 
 class Interaction(BaseModel):
@@ -144,11 +157,10 @@ class TicketType(BaseModel):
     name = models.CharField(max_length=50, null=False)
     ticket_price = models.DecimalField(default=0, null=False, max_digits=10, decimal_places=2)
     so_luong = models.IntegerField(null=False, default=0)
-    event = models.ForeignKey(Event, null=False, on_delete=models.RESTRICT, related_name='ticket_types')
+    event_date = models.ForeignKey(EventDate, null=False, on_delete=models.RESTRICT, related_name='ticket_types')
 
     def __str__(self):
-        return self.name
-
+        return f"{self.name} ({self.event_date})"
 
 class Ticket(BaseModel):
     content = models.CharField(max_length=255, null=False)

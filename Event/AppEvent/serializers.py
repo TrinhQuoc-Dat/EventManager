@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from rest_framework import serializers
-from .models import Category, User, Event, Ticket, Payment, PaymentTicket, TicketType, Comment
+from .models import Category, User, Event, Ticket, Payment, PaymentTicket, TicketType, Comment, EventDate
 
 
 class CategorySerializer(ModelSerializer):
@@ -54,43 +54,40 @@ class UserFCMTokenSerializer(ModelSerializer):
         fields = ['fcm_token']
 
 class TicketTypeSerializer(ModelSerializer):
-    # event_id = serializers.PrimaryKeyRelatedField(
-    #     queryset=Event.objects.all(),
-    #     required=True
-    # )
-
     class Meta:
         model = TicketType
-        fields = ['id', 'name', 'ticket_price', 'event', 'so_luong']
-    
-    # def create(self, validated_data):
-    #     event_id = validated_data.pop('event_id')
-    #     event = Event.objects.get(id=event_id)
-    #     ticket_type = TicketType.objects.create(**validated_data, event=event)
-    #     return ticket_type
+        fields = ['id', 'name', 'ticket_price', 'event_date', 'so_luong']
+
     
 class TicketSerializer(ModelSerializer):
     class Meta:
         model = Ticket
         fields = "__all__"
 
+class EventDateSerializer(ModelSerializer):
+    class Meta:
+        model = EventDate
+        fields = ['id', 'event_date', 'start_time', 'end_time']
+
 class EventSerializer(ItemSerializer):
     price = SerializerMethodField()
+    event_dates = EventDateSerializer(many=True)
 
     class Meta:
         model = Event
-        fields = ['id', 'title', 'image', 'start_date_time', 'location', 'location_name', 'price', 'category_id']
+        fields = ['id', 'title', 'image', 'location', 'location_name', 'price', 'category_id', 'event_dates']
     
     def get_price(self, obj):
-        # Giả sử lấy giá thấp nhất từ TicketType liên quan
-        ticket_types = obj.ticket_types.filter(active=True)
+        ticket_types = TicketType.objects.filter(event_date__event=obj, active=True)
         return min((tt.ticket_price for tt in ticket_types), default=0) if ticket_types.exists() else 0
 
 class EventDetailSerializer(ItemSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['organizer'] = OrganizerSerializer(instance.organizer).data
-        data['ticket_types'] = TicketTypeSerializer(instance.ticket_types.all(), many=True).data
+        data['event_dates'] = EventDateSerializer(instance.event_dates.all(), many=True).data
+        data['ticket_types'] = TicketTypeSerializer(
+            TicketType.objects.filter(event_date__event=instance, active=True), many=True).data
         data['comment_set'] = CommentSerializer(instance.comment_set.all(), many=True).data
         return data
     

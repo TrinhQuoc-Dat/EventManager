@@ -165,7 +165,7 @@ SESSION_COOKIE_SECURE = False
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'eventdb',
+        'NAME': 'eventdbv2',
         'USER': 'root',
         'PASSWORD': 'Abc@123',
         # 'PASSWORD': 'Admin@123',

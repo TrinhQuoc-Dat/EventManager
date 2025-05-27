@@ -57,7 +57,7 @@ class EventForm(forms.ModelForm):
         fields = '__all__'
 
 class EventAdmin(admin.ModelAdmin):
-    list_display = ['title', 'description', 'created_date', 'start_date_time', 'location', 'view_dashboard']
+    list_display = ['title', 'description', 'created_date', 'location', 'view_dashboard']
     search_fields = ['name', 'category']
     list_filter = ['category', 'created_date']
     ordering = ['-id']
