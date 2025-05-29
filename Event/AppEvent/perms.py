@@ -19,7 +19,24 @@ class IsOrganizer(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return request.user == obj.organizer
 
+class IsOwnerOrganizer(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user.role == 'organizer'
+    
+    def has_object_permission(self, request, view, obj):
+        return request.user == obj.event.organizer
 
+class IsOwnerTicketType(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user.role == 'organizer'
+    
+    def has_object_permission(self, request, view, obj):
+        return request.user == obj.event_date.event.organizer
+    
 class UserPermission(permissions.BasePermission):
     def get_permissions(self):
         if self.action.__eq__('current_user'):

@@ -268,7 +268,7 @@ const Home = () => {
               </View>
             )}
             left={() => (
-              <TouchableOpacity onPress={() => navigate('eventdetail', { eventId: item.id })}>
+              <TouchableOpacity onPress={() => navigate('eventdetail2', { eventId: item.id })}>
                 <Image style={MyStyles.avatar} source={{ uri: item.image }} />
               </TouchableOpacity>
             )}

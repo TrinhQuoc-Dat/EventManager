@@ -27,7 +27,10 @@ export const endpoints = {
     'create-ticket-types': (eventId) => `/api/event/${eventId}/ticket-types/`,
     'post-comment': (eventId) => `/api/event/${eventId}/comments/`,
     'add-ticket-type': (eventId) => `/api/event/${eventId}/add-ticket-type/`,
-    'add-date': (eventId) => `/api/event/${eventId}/add-date/`
+    'add-date': (eventId) => `/api/event/${eventId}/add-date/`,
+    'delete-date': (dateId) => `/api/event-date/${dateId}/`,
+    'ticket-type-of-date': (dateId) => `/api/event-date/${dateId}/ticket-types/`,
+    'delete-ticket-type': (ticketTypeId) => `/api/ticket-types/${ticketTypeId}/`
     
 
 };

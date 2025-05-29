@@ -266,14 +266,18 @@ class EventViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
             with transaction.atomic():
                 serializer.save(active=True)
 
-    @action(methods=['post'], detail=True, url_path='add-date')
+    @action(methods=['post', 'get'], detail=True, url_path='add-date')
     def add_event_date(self, request, pk):
-        event = self.get_object()
-        serializer = serializers.EventDateSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(event=event)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if request.method.__eq__('POST'):
+            event = self.get_object()
+            serializer = serializers.EventDateSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(event=event)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            dates = self.get_object().event_dates.filter(active=True)
+            return Response(serializers.EventDateSerializer(dates, many=True).data, status=status.HTTP_200_OK)
 
     @action(methods=['post'], detail=True, url_path='add-ticket-type')
     def add_ticket_type(self, request, pk):
@@ -332,21 +336,7 @@ class EventViewSet(viewsets.ViewSet, generics.ListAPIView, generics.RetrieveAPIV
             comments = self.get_object().comment_set.select_related('user').filter(active=True)
             return Response(serializers.CommentSerializer(comments, many=True).data, status=status.HTTP_200_OK)
         
-    # @action(methods=['get', 'post'], detail=True, url_path='ticket-types')
-    # def get_ticket_types(self, request, pk):
-    #     if request.method.__eq__('POST'):
-    #         u = serializers.TicketTypeSerializer(data={
-    #             'name': request.data.get('name'),
-    #             'ticket_price': request.data.get('ticket_price'),
-    #             'so_luong': request.data.get('so_luong'),
-    #             'event': pk
-    #         })
-    #         u.is_valid(raise_exception=True)
-    #         c = u.save()
-    #         return Response(serializers.TicketTypeSerializer(c).data, status=status.HTTP_201_CREATED)
-    #     else:
-    #         ticket_types = self.get_object().ticket_types.select_related('event').filter(active=True)
-    #         return Response(serializers.TicketTypeSerializer(ticket_types, many=True).data, status=status.HTTP_200_OK)
+  
 
 
 
@@ -359,17 +349,44 @@ class TicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView, generics.CreateA
     serializer_class = serializers.TicketSerializer
 
 
-class TicketTypeViewSet(viewsets.ViewSet, generics. DestroyAPIView, generics.UpdateAPIView):
+class TicketTypeViewSet(viewsets.ViewSet, generics.UpdateAPIView, generics.DestroyAPIView, generics.ListAPIView, generics.RetrieveAPIView):
     queryset = TicketType.objects.filter(active=True)
     serializer_class = serializers.TicketTypeSerializer
-    permission_classes = [perms.IsOrganizer()]
+
+    def get_permissions(self):
+        if self.request.method.__eq__('GET'):
+            return [permissions.AllowAny()]
+        return [perms.IsOwnerTicketType()]
+
 
 
 
 class CommentViewSet(viewsets.ViewSet, generics. DestroyAPIView, generics.UpdateAPIView):
     queryset = Comment.objects.filter(active=True)
     serializer_class = serializers.CommentSerializer
-    permission_classes = [perms.OwnerAuthenticated()]
+    permission_classes = [perms.OwnerAuthenticated]
+
+class EventDateViewSet(viewsets.ModelViewSet):
+    queryset = EventDate.objects.filter(active=True)
+    # serializer_class = serializers.EventDateSerializer
+    # permission_classes = [perms.IsOwnerOrganizer]  
+
+    def get_permissions(self):
+        if self.request.method.__eq__('GET'):
+            return [permissions.AllowAny()]
+        return [perms.IsOwnerOrganizer]  
+    
+    def get_serializer_class(self):
+        if self.action in ['get_ticket_types']:
+            return serializers.TicketTypeSerializer
+        return serializers.EventDateSerializer
+    
+    @action(methods=['get'], url_path="ticket-types", detail=True)
+    def get_ticket_types(self, request, pk):
+        u = self.get_object().ticket_types.filter(active=True)
+        return Response(serializers.TicketTypeSerializer(u, many=True).data, status=status.HTTP_200_OK)
+
+
 
     
 class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
