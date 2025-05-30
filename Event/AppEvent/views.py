@@ -1,6 +1,3 @@
-import hashlib
-import hmac
-
 from PIL.ImagePalette import random
 from rest_framework import viewsets, generics, permissions, mixins, status, parsers
 from django.contrib.auth import authenticate
@@ -28,6 +25,7 @@ import requests
 from django.db import transaction
 from rest_framework.permissions import IsAuthenticated
 import uuid
+import cloudinary
 from django.utils import timezone
 
 
@@ -53,6 +51,14 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     serializer_class = serializers.UserSerializer
     parser_classes = [parsers.MultiPartParser]
     permission_classes = [permissions.AllowAny]
+
+    def perform_create(self, serializer):
+        avatar_file = self.request.FILES.get('avatar')
+        if avatar_file:
+            upload_result = cloudinary.uploader.upload(avatar_file)
+            serializer.save(avatar=upload_result['secure_url'])  # lưu URL vào CloudinaryField
+        else:
+            serializer.save()
 
     @action(methods=['post'], url_path='fcm-token', detail=False)
     def save_fcm_token(self, request):
