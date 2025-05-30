@@ -104,7 +104,7 @@ const Resgister = () => {
                             form.append(key, user[key]);
                     }
 
-                 if (user.image) form.append(user.image, 'avatar');
+                 if (user.image) form.append('avatar', user.image);
                 form.append('role', role);
 
                 console.info(form);

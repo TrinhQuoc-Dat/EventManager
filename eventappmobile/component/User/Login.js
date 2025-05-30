@@ -25,7 +25,6 @@ const Login = () => {
     const [user, setUser] = useState({});
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState();
-    const nav = useNavigation();
     const dispatch = useContext(MyDispatchContext);
     const [role, setRole] = useState("participant");
     const [menuVisible, setMenuVisible] = useState(false);

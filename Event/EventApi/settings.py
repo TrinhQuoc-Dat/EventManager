@@ -85,7 +85,7 @@ INTERNAL_IPS = [
 
 ROOT_URLCONF = 'EventApi.urls'
 
-CLOUDINARY_URL = 'cloudinary://358476894396759:BJB1D2g3nRAdPtErPMYLIELEuyM@dmt3j04om'
+# CLOUDINARY_URL = 'cloudinary://358476894396759:BJB1D2g3nRAdPtErPMYLIELEuyM@dmt3j04om'
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 import cloudinary

@@ -33,11 +33,15 @@ class UserSerializer(ModelSerializer):
                 'write_only': True
             }
         }
+    def validate_avatar(self, value):
+        if value and not str(value).startswith("http"):
+            raise serializers.ValidationError("Avatar phải là đường dẫn URL hợp lệ của Cloudinary.")
+        return value
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        data['avatar'] = instance.avatar.url if instance.avatar else ''
-        return data
+    # def to_representation(self, instance):
+    #     data = super().to_representation(instance)
+    #     data['avatar'] = instance.avatar.url if instance.avatar else ''
+    #     return data
 
     def create(self, validated_data):
         data = validated_data.copy()
@@ -86,6 +90,7 @@ class EventSerializer(ItemSerializer):
         ticket_types = obj.ticket_types.filter(active=True)
         return min((tt.ticket_price for tt in ticket_types), default=0) if ticket_types.exists() else 0
 
+
 class EventDetailSerializer(ItemSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -97,7 +102,7 @@ class EventDetailSerializer(ItemSerializer):
     class Meta:
         model = Event
         fields = '__all__'
-        read_only_fields  = ['organizer']
+        read_only_fields=['organizer']
         # fields = ['id', 'title', 'description', 'start_date_time',
         #           'end_date_time', 'image', 'location', 'location_name',
         #           'kinh_do', 'vi_do', 'category_id', 
