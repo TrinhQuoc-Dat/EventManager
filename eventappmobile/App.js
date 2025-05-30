@@ -18,6 +18,8 @@ import PaymentTicket from "./component/Payment/PaymentTicket";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { navigationRef } from "./service/NavigationService";
 import CreateCategory from "./component/Event/CreateCategory";
+import CreateTicketType from "./component/Event/CreateTicketType";
+import AddEventDates from "./component/Event/AddEventDates";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -42,6 +44,8 @@ const TabNavigator = () => {
           {user.role === 'organizer' && (
             <>
               <Tab.Screen name="createvent" component={CreateEvent} options={{ title: "Tạo sự kiện", tabBarIcon: ({ color, size }) => <MaterialIcons name="add-circle-outline" color={color} size={size} /> }} />
+              <Tab.Screen name="addeventdates" component={AddEventDates} options={{ title: "Tạo ngày sự kiện", tabBarIcon: ({ color, size }) => <MaterialIcons name="add-circle-outline" color={color} size={size} /> }} />
+              <Tab.Screen name="createtickettype" component={CreateTicketType} options={{ title: "Tạo loại vé", tabBarIcon: ({ color, size }) => <MaterialIcons name="add-circle-outline" color={color} size={size} /> }} />
               <Tab.Screen name="checkin" component={ScannerTicket} options={{ title: "Check in", tabBarIcon: ({ color, size }) => <MaterialIcons name="check" color={color} size={size} /> }} />
             </>)}
           <Tab.Screen name="profile" component={Profile} options={{ title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />

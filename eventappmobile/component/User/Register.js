@@ -6,6 +6,7 @@ import MyStyles from "../../styles/MyStyles";
 import * as ImagePicker from 'expo-image-picker';
 import Apis, { endpoints } from "../../configs/Apis";
 import { UploadCloudinary } from "../../service/UploadCloudinary";
+import { SafeAreaView } from "react-native";
 
 const Resgister = () => {
 
@@ -129,8 +130,8 @@ const Resgister = () => {
 
 
     return (
-
-        <ScrollView contentContainerStyle={[MyStyles.container, { flexGrow: 1 }]} >
+        <SafeAreaView>
+        <ScrollView  >
             <Text style={MyStyles.subject}>Đăng ký tài khoản</Text>
 
             <HelperText type="error" visible={msg}>
@@ -213,7 +214,7 @@ const Resgister = () => {
             <View style={{ height: "300px", width: "100%" }} />
 
         </ScrollView>
-
+        </SafeAreaView>
     )
 
 }
