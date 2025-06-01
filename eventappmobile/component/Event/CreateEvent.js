@@ -476,11 +476,16 @@ import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
-import { navigate } from "../../service/NavigationService";
+// import { navigate } from "../../service/NavigationService";
 import axios from "axios";
 import debounce from "lodash/debounce";
+import { useNavigation } from "@react-navigation/native";
+// import { navigate } from "../../service/NavigationService";
 
-const CreateEvent = () => {
+const CreateEvent = ({ route }) => {
+  const nav = useNavigation();
+  const eventId = route.params?.eventId;
+  const isEditMode = !!eventId;
   const [event, setEvent] = useState({
     title: "",
     description: "",
@@ -506,9 +511,33 @@ const CreateEvent = () => {
     }
   };
 
+  const loadEvent = async () => {
+    if (!isEditMode) return;
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem("token");
+      const response = await authApis(token).get(endpoints["event"](eventId));
+      const eventData = response.data;
+      setEvent({
+        title: eventData.title,
+        description: eventData.description,
+        location: eventData.location,
+        location_name: eventData.location_name,
+        category: eventData.category?.id || eventData.category, // Đảm bảo category là id
+        image: eventData.image,
+      });
+    } catch (error) {
+      console.error("Lỗi khi tải sự kiện:", error);
+      Alert.alert("Lỗi", "Không thể tải thông tin sự kiện.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadCates();
-  }, []);
+    loadEvent();
+  }, [eventId]);
 
   const fetchLocationSuggestions = async (input) => {
     if (!input) {
@@ -516,23 +545,12 @@ const CreateEvent = () => {
       setShowSuggestions(false);
       return;
     }
-
     try {
       const response = await axios.get(`https://rsapi.goong.io/Place/AutoComplete`, {
-        params: {
-          api_key: GOONG_API_KEY,
-          input: input,
-          limit: 5,
-        },
+        params: { api_key: GOONG_API_KEY, input, limit: 5 },
       });
-
-      if (response.data && response.data.predictions) {
-        setLocationSuggestions(response.data.predictions);
-        setShowSuggestions(true);
-      } else {
-        setLocationSuggestions([]);
-        setShowSuggestions(false);
-      }
+      setLocationSuggestions(response.data.predictions || []);
+      setShowSuggestions(true);
     } catch (error) {
       console.error("Lỗi khi lấy gợi ý địa điểm:", error);
       setLocationSuggestions([]);
@@ -540,7 +558,7 @@ const CreateEvent = () => {
     }
   };
 
-  const debouncedFetchSuggestions = useCallback(debounce((text) => fetchLocationSuggestions(text), 500), []);
+  const debouncedFetchSuggestions = useCallback(debounce(fetchLocationSuggestions, 500), []);
 
   const handleLocationInputChange = (text) => {
     setEvent((prev) => ({ ...prev, location: text }));
@@ -550,8 +568,8 @@ const CreateEvent = () => {
   const handleSelectSuggestion = (suggestion) => {
     setEvent((prev) => ({ ...prev, location: suggestion.description }));
     setLocationSuggestions([]);
-    debouncedFetchSuggestions.cancel();
     setShowSuggestions(false);
+    debouncedFetchSuggestions.cancel();
   };
 
   const selectImage = async () => {
@@ -566,12 +584,11 @@ const CreateEvent = () => {
     }
   };
 
-  const handleCreateEvent = async () => {
+  const handleSubmit = async () => {
     const { title, description, location, location_name, category, image } = event;
     const token = await AsyncStorage.getItem("token");
 
     if (!title || !description || !location || !location_name || !category) {
-      console.log("Dữ liệu đầu vào:", { title, description, location, location_name, category });
       Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin!");
       return;
     }
@@ -590,7 +607,7 @@ const CreateEvent = () => {
       formData.append("location_name", location_name);
       formData.append("category", category);
 
-      if (image) {
+      if (image && image.startsWith("file://")) {
         const uriParts = image.split(".");
         const fileType = uriParts[uriParts.length - 1];
         formData.append("image", {
@@ -600,33 +617,14 @@ const CreateEvent = () => {
         });
       }
 
-      console.log("Dữ liệu formData gửi đi:", {
-        title,
-        description,
-        location,
-        location_name,
-        category,
-        image: image ? "Có ảnh" : "Không có ảnh",
+      const endpoint = isEditMode ? endpoints["event"](eventId) : endpoints["events"];
+      const method = isEditMode ? authApis(token).patch : authApis(token).post;
+
+      const response = await method(endpoint, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      const response = await authApis(token).post(endpoints["events"], formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      console.log("Response tạo sự kiện:", response.data);
-
-      // Kiểm tra sự kiện có thực sự được lưu
-      // try {
-      //   const verifyResponse = await authApis(token).get(endpoints["event"](response.data.id));
-      //   console.log("Kiểm tra sự kiện:", verifyResponse.data);
-      // } catch (verifyError) {
-      //   console.error("Lỗi khi kiểm tra sự kiện:", verifyError.response?.data);
-      //   Alert.alert("Cảnh báo", "Sự kiện được tạo nhưng không thể truy cập ngay lập tức!");
-      // }
-
-      Alert.alert("Thành công", "Sự kiện đã được tạo thành công!");
+      Alert.alert("Thành công", isEditMode ? "Sự kiện đã được cập nhật!" : "Sự kiện đã được tạo!");
       setEvent({
         title: "",
         description: "",
@@ -635,19 +633,15 @@ const CreateEvent = () => {
         category: null,
         image: null,
       });
-
-      navigate("addeventdates", { eventId: response.data.id });
+      {isEditMode ? nav.navigate("create-event-2", {screen: 'add-event-dates', params: {eventId: eventId}}) : 
+        nav.navigate("add-event-dates", {eventId: response.data.id})}
+      
     } catch (error) {
       console.error("Chi tiết lỗi:", {
         message: error.message,
-        code: error.code,
-        config: error.config,
         response: error.response?.data,
       });
-      Alert.alert(
-        "Lỗi",
-        `Không thể tạo sự kiện: ${error.response?.data?.detail || error.message}`
-      );
+      Alert.alert("Lỗi", `Không thể ${isEditMode ? "cập nhật" : "tạo"} sự kiện: ${error.response?.data?.detail || error.message}`);
     } finally {
       setLoading(false);
     }
@@ -663,7 +657,6 @@ const CreateEvent = () => {
           onChangeText={(text) => setEvent((prev) => ({ ...prev, title: text }))}
           placeholder="Nhập tiêu đề sự kiện"
         />
-
         <Text style={styles.label}>Mô tả</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
@@ -673,7 +666,6 @@ const CreateEvent = () => {
           multiline
           numberOfLines={4}
         />
-
         <Text style={styles.label}>Địa điểm</Text>
         <View>
           <TextInput
@@ -696,7 +688,6 @@ const CreateEvent = () => {
             </View>
           )}
         </View>
-
         <Text style={styles.label}>Tên địa điểm</Text>
         <TextInput
           style={styles.input}
@@ -704,7 +695,6 @@ const CreateEvent = () => {
           onChangeText={(text) => setEvent((prev) => ({ ...prev, location_name: text }))}
           placeholder="Nhập tên địa điểm (ví dụ: Viettel Tower)"
         />
-
         <Text style={styles.label}>Danh mục</Text>
         <Picker
           selectedValue={event.category}
@@ -717,15 +707,13 @@ const CreateEvent = () => {
             <Picker.Item key={cat.id} label={cat.name} value={cat.id} />
           ))}
         </Picker>
-
         <Text style={styles.label}>Hình ảnh</Text>
         <TouchableOpacity style={styles.imageButton} onPress={selectImage} disabled={loading}>
           <Text style={styles.imageButtonText}>Chọn ảnh đại diện...</Text>
         </TouchableOpacity>
         {event.image && <Image source={{ uri: event.image }} style={styles.imagePreview} />}
-
-        <TouchableOpacity style={styles.customButton} onPress={handleCreateEvent} disabled={loading}>
-          <Text>{loading ? "Đang tạo..." : "Tạo sự kiện   -->"}</Text>
+        <TouchableOpacity style={styles.customButton} onPress={handleSubmit} disabled={loading}>
+          <Text>{loading ? "Đang xử lý..." : isEditMode ? "Cập nhật sự kiện" : "Tạo sự kiện"}</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -781,7 +769,6 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   customButton: {
-    flexDirection: "row",
     backgroundColor: "#e91e63",
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -799,7 +786,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
-    overflow: "scroll",
   },
   suggestionItem: {
     padding: 12,
