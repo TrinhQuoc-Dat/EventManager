@@ -1,82 +1,48 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Image,
-  ScrollView,
-  Button,
-} from "react-native";
-import Apis, { authApis, endpoints } from "../../configs/Apis";
-import { SafeAreaView } from "react-native";
-import { Chip, Icon, List, Searchbar } from "react-native-paper";
-import MyStyles from "../../styles/MyStyles";
-// import { navigate } from "../../service/NavigationService";
-import moment from "moment";
-import "moment/locale/vi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { editable } from "deprecated-react-native-prop-types/DeprecatedTextInputPropTypes";
+import { useEffect, useState } from "react";
+import { FlatList, Image, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, List } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import MyStyles from "../../styles/MyStyles";
 import { useNavigation } from "@react-navigation/native";
+import { authApis, endpoints } from "../../configs/Apis";
+import moment from "moment";
+import { navigate } from "../../service/NavigationService";
 
-const UserEvents = () => {
+const TicketedEvents = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const nav = useNavigation();
-  //   const [token, setToken] = useState();
-
-  //   const loadToken = async () => {
-  //     const t = await AsyncStorage.getItem("token");
-  //     setToken(t);
-  //   }
-
-  //   useEffect(() => {
-  //     loadToken();
-  //   }, [])
 
   const loadEvents = async () => {
+    const token = await AsyncStorage.getItem("token");
     if (page > 0) {
       try {
-        const token = await AsyncStorage.getItem("token");
         setLoading(true);
-        let url = `${endpoints["event-user"]}?page=${page}`;
+        let url = `${endpoints["ticketed-events"]}?page=${page}`;
 
         let res = await authApis(token).get(url);
+        console.log(res.data);
         setEvents([...events, ...res.data.results]);
+        console.log(events);
 
-        if (res.data.next === null) {
+        if (res.data.link.next === null) {
           setPage(0);
         }
-      } catch {
-        // console.error(ex);
+      } catch (ex) {
+        console.error(ex);
       } finally {
         setLoading(false);
       }
     }
   };
-  console.log(events);
+
   const loadMore = () => {
     if (!loading && page > 0) {
       setPage((page) => page + 1);
     }
   };
-
-  const search = (value, callback) => {
-    setPage(1);
-    setEvents([]);
-    callback(value);
-  };
-
-  useEffect(() => {
-    let timer = setTimeout(() => {
-      loadEvents();
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [page]);
 
   const formatEventDates = (eventDates) => {
     moment.locale("vi");
@@ -89,6 +55,14 @@ const UserEvents = () => {
     return `${firstDate} - ${lastDate}`;
   };
 
+  useEffect(() => {
+    let timer = setTimeout(() => {
+      loadEvents();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [page]);
+
   return (
     <SafeAreaView>
       <FlatList
@@ -97,6 +71,7 @@ const UserEvents = () => {
         ListFooterComponent={loading && <ActivityIndicator />}
         data={events}
         renderItem={({ item }) => (
+          console.log(item),
           <List.Item
             title={item.title}
             description={() => (
@@ -106,21 +81,17 @@ const UserEvents = () => {
               </View>
             )}
             left={() => (
-              <TouchableOpacity onPress={() => nav.navigate("eventdetail3", { eventId: item.id })}>
+              <TouchableOpacity
+                onPress={() => navigate("eventdetail3", { eventId: item.id })}
+              >
                 <Image style={MyStyles.avatar} source={{ uri: item.image }} />
-              </TouchableOpacity>
-            )}
-            right={() => (
-              <TouchableOpacity onPress={() => nav.navigate("create-event-2", { screen: 'create-event' ,params: {eventId: item.id} } )}>
-                <Text>Edit</Text>
               </TouchableOpacity>
             )}
           />
         )}
       />
-      
     </SafeAreaView>
   );
 };
 
-export default UserEvents;
+export default TicketedEvents;

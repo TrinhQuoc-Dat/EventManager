@@ -47,7 +47,7 @@ const Profile = () => {
           >
             Đăng xuất
           </Button>
-          {user.role !== "participant" ? (
+          {user.role !== "participant" ? (<>
             <Button
               style={styles.logoutBtn}
               onPress={() => navigate("userevents")}
@@ -56,8 +56,18 @@ const Profile = () => {
             >
               Sự kiện của tôi
             </Button>
+
+            </>
+            
           ) : (
-            ""
+            <Button
+              style={styles.logoutBtn}
+              onPress={() => navigate("ticketed-events")}
+              mode="contained"
+              labelStyle={{ fontSize: 16 }}
+            >
+              Vé của tôi
+            </Button>
           )}
         </View>
       </View>

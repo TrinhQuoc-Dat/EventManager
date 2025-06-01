@@ -45,12 +45,14 @@ const AddEventDates = ({ route, navigation }) => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem("token");
-      const response = await authApis(token).get(endpoints['delete-date'](dateId));
+      const response = await authApis(token).get(
+        endpoints["delete-date"](dateId)
+      );
       const dateData = response.data;
       setNewDate({
         event_date: new Date(dateData.event_date),
-        start_time: new Date(`1970-01-01T${dateData.start_time}Z`),
-        end_time: new Date(`1970-01-01T${dateData.end_time}Z`),
+        start_time: new Date(`1970-01-01T${dateData.start_time}`),
+        end_time: new Date(`1970-01-01T${dateData.end_time}`),
       });
     } catch (error) {
       console.error("Lỗi khi tải ngày sự kiện:", error);
@@ -86,19 +88,35 @@ const AddEventDates = ({ route, navigation }) => {
 
     setLoading(true);
     try {
+      const pad = (n) => n.toString().padStart(2, "0");
       const formData = new FormData();
       formData.append("event_date", event_date.toISOString().split("T")[0]);
-      formData.append("start_time", start_time.toISOString().split("T")[1].slice(0, 8));
-      formData.append("end_time", end_time.toISOString().split("T")[1].slice(0, 8));
+      formData.append(
+        "start_time",
+        `${pad(start_time.getHours())}:${pad(start_time.getMinutes())}:${pad(
+          start_time.getSeconds()
+        )}`
+      );
+      formData.append(
+        "end_time",
+        `${pad(end_time.getHours())}:${pad(end_time.getMinutes())}:${pad(
+          end_time.getSeconds()
+        )}`
+      );
 
-      const endpoint = isEditMode ? endpoints['delete-date'](dateId) : endpoints["add-date"](eventId);
+      const endpoint = isEditMode
+        ? endpoints["delete-date"](dateId)
+        : endpoints["add-date"](eventId);
       const method = isEditMode ? authApis(token).patch : authApis(token).post;
-      console.log(formData)
+      console.log(formData);
       await method(endpoint, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      Alert.alert("Thành công", isEditMode ? "Ngày đã được cập nhật!" : "Ngày đã được thêm!");
+      Alert.alert(
+        "Thành công",
+        isEditMode ? "Ngày đã được cập nhật!" : "Ngày đã được thêm!"
+      );
       setNewDate({
         event_date: new Date(),
         start_time: new Date(),
@@ -110,7 +128,12 @@ const AddEventDates = ({ route, navigation }) => {
         message: error.message,
         response: error.response?.data,
       });
-      Alert.alert("Lỗi", `Không thể ${isEditMode ? "cập nhật" : "thêm"} ngày: ${error.response?.data?.detail || error.message}`);
+      Alert.alert(
+        "Lỗi",
+        `Không thể ${isEditMode ? "cập nhật" : "thêm"} ngày: ${
+          error.response?.data?.detail || error.message
+        }`
+      );
     } finally {
       setLoading(false);
     }
@@ -134,10 +157,15 @@ const AddEventDates = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView>
-        <Text style={styles.label}>{isEditMode ? "Chỉnh sửa ngày sự kiện" : "Thêm ngày cho sự kiện"}</Text>
+        <Text style={styles.label}>
+          {isEditMode ? "Chỉnh sửa ngày sự kiện" : "Thêm ngày cho sự kiện"}
+        </Text>
         <View style={styles.dateContainer}>
           <Text style={styles.label}>Ngày</Text>
-          <Button title="Chọn ngày" onPress={() => setShowDatePicker({ field: "event_date" })} />
+          <Button
+            title="Chọn ngày"
+            onPress={() => setShowDatePicker({ field: "event_date" })}
+          />
           <Text style={styles.dateText}>
             {newDate.event_date.toLocaleDateString("vi-VN", {
               day: "2-digit",
@@ -146,17 +174,39 @@ const AddEventDates = ({ route, navigation }) => {
             })}
           </Text>
           <Text style={styles.label}>Giờ bắt đầu</Text>
-          <Button title="Chọn giờ bắt đầu" onPress={() => setShowDatePicker({ field: "start_time" })} />
+          <Button
+            title="Chọn giờ bắt đầu"
+            onPress={() => setShowDatePicker({ field: "start_time" })}
+          />
           <Text style={styles.dateText}>
-            {newDate.start_time.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+            {newDate.start_time.toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </Text>
           <Text style={styles.label}>Giờ kết thúc</Text>
-          <Button title="Chọn giờ kết thúc" onPress={() => setShowDatePicker({ field: "end_time" })} />
+          <Button
+            title="Chọn giờ kết thúc"
+            onPress={() => setShowDatePicker({ field: "end_time" })}
+          />
           <Text style={styles.dateText}>
-            {newDate.end_time.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+            {newDate.end_time.toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </Text>
-          <TouchableOpacity style={styles.customButton} onPress={handleSubmit} disabled={loading}>
-            <Text>{loading ? "Đang xử lý..." : isEditMode ? "Cập nhật ngày" : "Thêm ngày"}</Text>
+          <TouchableOpacity
+            style={styles.customButton}
+            onPress={handleSubmit}
+            disabled={loading}
+          >
+            <Text>
+              {loading
+                ? "Đang xử lý..."
+                : isEditMode
+                ? "Cập nhật ngày"
+                : "Thêm ngày"}
+            </Text>
           </TouchableOpacity>
         </View>
         <Text style={styles.label}>Danh sách ngày</Text>
@@ -171,7 +221,12 @@ const AddEventDates = ({ route, navigation }) => {
               <View style={styles.buttonGroup}>
                 <TouchableOpacity
                   style={styles.editButton}
-                  onPress={() => nav.navigate("add-event-dates", { eventId, dateId: date.id })}
+                  onPress={() =>
+                    nav.navigate("add-event-dates", {
+                      eventId,
+                      dateId: date.id,
+                    })
+                  }
                   disabled={loading}
                 >
                   <Text style={styles.buttonText}>Chỉnh sửa</Text>
@@ -194,7 +249,11 @@ const AddEventDates = ({ route, navigation }) => {
         >
           <Text>Tiếp tục tạo loại vé</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.customButton} onPress={() => nav.navigate("userevents")} disabled={loading}>
+        <TouchableOpacity
+          style={styles.customButton}
+          onPress={() => nav.navigate("userevents")}
+          disabled={loading}
+        >
           <Text>XONG</Text>
         </TouchableOpacity>
       </ScrollView>

@@ -2,7 +2,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import Home from "./component/home/Home";
 import { MyDispatchContext, MyUserContext } from "./configs/Context";
-import { useContext, useReducer } from "react";
+import { useContext, useEffect, useReducer } from "react";
 import Resgister from "./component/User/Register";
 import Login from "./component/User/Login";
 import MyUserReducer from "./reducers/MyUserReducer";
@@ -21,6 +21,10 @@ import CreateCategory from "./component/Event/CreateCategory";
 import CreateTicketType from "./component/Event/CreateTicketType";
 import AddEventDates from "./component/Event/AddEventDates";
 import UserEvents from "./component/Event/UserEvents";
+// import { requestPermission, setupFCM } from "./service/FCMHandler";
+import Chat from "./component/Chats/Chat";
+import TicketedEvents from "./component/Event/TicketedEvents";
+import ContactList from "./component/Chats/ContactList";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -50,6 +54,7 @@ const TabNavigator = () => {
               <Tab.Screen name="checkin" component={ScannerTicket} options={{ title: "Check in", tabBarIcon: ({ color, size }) => <MaterialIcons name="check" color={color} size={size} /> }} />
             </>)}
           <Tab.Screen name="profile" component={ProfiletNavigator}  options={{ headerShown: false ,title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
+          {/* <Tab.Screen name="chat" component={Chat}  options={{ headerShown: false ,title: "Chat", tabBarIcon: () => <Icon size={30} source="account" /> }} /> */}
         </>
       )}
     </Tab.Navigator>
@@ -63,6 +68,9 @@ const ProfiletNavigator = () => {
       <Stack.Screen name='userevents' component={UserEvents} options={{ title: "Sự kiện của tôi", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
       <Stack.Screen name='eventdetail3' component={EventDetail} options={{ title: "Chi tiết sự kiện", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
       <Stack.Screen name='create-event-2' component={CreateEventNavigator} options={{ title: "Chi tiết sự kiện", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
+      <Stack.Screen name='ticketed-events' component={TicketedEvents} options={{ title: "Sự kiện đã thanh toán", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
+      <Stack.Screen name='chat' component={Chat} options={{ title: "Sự kiện đã thanh toán", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
+      <Stack.Screen name='contact-list' component={ContactList} options={{ title: "Tin nhắn", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
     </Stack.Navigator>
   );
 }
@@ -72,6 +80,7 @@ const HometNavigator = () => {
     <Stack.Navigator >
       <Stack.Screen name='home2' component={Home} options={{ title: "Trang chủ", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
       <Stack.Screen name='eventdetail2' component={EventDetail} options={{ title: "Chi tiết sự kiện", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
+      <Stack.Screen name='chat' component={Chat} options={{ title: "Sự kiện đã thanh toán", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
     </Stack.Navigator>
   );
 }
@@ -97,6 +106,10 @@ const MainStack = () => {
 
 const App = () => {
   const [user, dispatch] = useReducer(MyUserReducer, null);
+  // useEffect(() => {
+  //   requestPermission();
+  //   setupFCM();
+  // }, []);
 
   return (
     <MyUserContext.Provider value={user}>

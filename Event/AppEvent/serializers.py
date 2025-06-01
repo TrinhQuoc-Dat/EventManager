@@ -22,7 +22,8 @@ class OrganizerSerializer(ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['organization_name', 'avatar']
+        fields = ['organization_name', 'avatar', 'email']
+        read_only_fields = ['email']
 
 class UserSerializer(ModelSerializer):
     class Meta:
@@ -57,6 +58,7 @@ class TicketTypeSerializer(ModelSerializer):
     class Meta:
         model = TicketType
         fields = ['id', 'name', 'ticket_price', 'event_date', 'so_luong']
+    
 
     
 class TicketSerializer(ModelSerializer):
@@ -82,6 +84,8 @@ class EventSerializer(ItemSerializer):
         return min((tt.ticket_price for tt in ticket_types), default=0) if ticket_types.exists() else 0
 
 class EventDetailSerializer(ItemSerializer):
+    event_dates = EventDateSerializer(many=True, required=False)
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['organizer'] = OrganizerSerializer(instance.organizer).data
@@ -91,10 +95,21 @@ class EventDetailSerializer(ItemSerializer):
         data['comment_set'] = CommentSerializer(instance.comment_set.all(), many=True).data
         return data
     
+    def create(self, validated_data):
+        event_dates_data = validated_data.pop('event_dates', [])
+        event = Event.objects.create(**validated_data)
+        for date_data in event_dates_data:
+            EventDate.objects.create(event=event, **date_data)
+        return event
+    
     class Meta:
         model = Event
         fields = '__all__'
-        read_only_fields  = ['organizer']
+        read_only_fields  = ['organizer', 'kinh_do', 'vi_do']
+
+    
+    
+    
 
 class CommentUserSerializer(ModelSerializer):
     def to_representation(self, instance):

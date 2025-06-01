@@ -114,7 +114,7 @@
 //         ListFooterComponent={loading && <ActivityIndicator />}
 //         data={events}
 //         renderItem={({ item }) => (
-//           <List.Item 
+//           <List.Item
 //             title={item.title}
 //             description={(<View>
 //               <Text>Từ {item.price} VNĐ</Text>
@@ -134,7 +134,6 @@
 // };
 
 // export default Home;
-
 
 import React, { useState, useEffect } from "react";
 import {
@@ -185,7 +184,7 @@ const Home = () => {
         let res = await Apis.get(url);
         setEvents([...events, ...res.data.results]);
 
-        if (res.data.next === null) {
+        if (res.data.link.next === null) {
           setPage(0);
         }
       } catch {
@@ -225,8 +224,22 @@ const Home = () => {
     if (eventDates.length === 0) return "Chưa có ngày";
     const firstDate = moment(eventDates[0].event_date).format("DD/MM/YYYY");
     if (eventDates.length === 1) return firstDate;
-    const lastDate = moment(eventDates[eventDates.length - 1].event_date).format("DD/MM/YYYY");
+    const lastDate = moment(
+      eventDates[eventDates.length - 1].event_date
+    ).format("DD/MM/YYYY");
     return `${firstDate} - ${lastDate}`;
+  };
+
+  const isEventFinished = (eventDates) => {
+    if (!Array.isArray(eventDates) || eventDates.length === 0) return false;
+    const now = moment();
+    const last = eventDates[eventDates.length - 1];
+    if (!last?.event_date || !last?.end_time) return false;
+    const latestEventDate = moment(last.event_date).set({
+      hour: moment(last.end_time, "HH:mm").hours(),
+      minute: moment(last.end_time, "HH:mm").minutes(),
+    });
+    return now.isAfter(latestEventDate);
   };
 
   return (
@@ -265,10 +278,15 @@ const Home = () => {
               <View>
                 <Text>Từ {item.price.toLocaleString("vi-VN")} VNĐ</Text>
                 <Text>{formatEventDates(item.event_dates)}</Text>
+                {isEventFinished(item.event_dates) && (
+                  <Text style={{ color: "red" }}>đã diễn ra</Text>
+                )}
               </View>
             )}
             left={() => (
-              <TouchableOpacity onPress={() => navigate('eventdetail2', { eventId: item.id })}>
+              <TouchableOpacity
+                onPress={() => navigate("eventdetail2", { eventId: item.id })}
+              >
                 <Image style={MyStyles.avatar} source={{ uri: item.image }} />
               </TouchableOpacity>
             )}
