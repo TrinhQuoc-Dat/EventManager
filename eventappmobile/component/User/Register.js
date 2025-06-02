@@ -105,7 +105,17 @@ const Resgister = () => {
                             form.append(key, user[key]);
                     }
 
-                 if (user.image) form.append('avatar', user.image);
+                console.log(user.image)
+                if (user.image && user.image.uri) {
+                    const uriParts = user.image.uri.split(".");
+                    const fileType = uriParts[uriParts.length - 1];
+
+                    form.append("avatar", {
+                        uri: user.image.uri,
+                        name: user.image.fileName || `avatar.${fileType}`,
+                        type: user.image.mimeType || `image/${fileType}`,
+                    });
+                }
                 form.append('role', role);
 
                 console.info(form);
@@ -131,89 +141,89 @@ const Resgister = () => {
 
     return (
         <SafeAreaView>
-        <ScrollView  >
-            <Text style={MyStyles.subject}>Đăng ký tài khoản</Text>
+            <ScrollView  >
+                <Text style={MyStyles.subject}>Đăng ký tài khoản</Text>
 
-            <HelperText type="error" visible={msg}>
-                {msg}
-            </HelperText>
+                <HelperText type="error" visible={msg}>
+                    {msg}
+                </HelperText>
 
-            {info.map(i => (
-                <View key={i.field} style={[MyStyles.inputContainer, MyStyles.m]}>
-                    <TextInput
-                        label={i.label}
-                        secureTextEntry={i.secureTextEntry}
-                        right={<TextInput.Icon icon={i.icon} />}
-                        value={user[i.field]}
-                        onChangeText={t => setState(t, i.field)}
-                        style={MyStyles.input}
-                        mode="outlined"
-                    />
-                </View>
-            ))}
-            <View style={[MyStyles.m, { zIndex: 1 }]}>
-                <Menu
-                    visible={menuVisible}
-                    onDismiss={() => setMenuVisible(false)}
-                    anchor={
-                        <Button
+                {info.map(i => (
+                    <View key={i.field} style={[MyStyles.inputContainer, MyStyles.m]}>
+                        <TextInput
+                            label={i.label}
+                            secureTextEntry={i.secureTextEntry}
+                            right={<TextInput.Icon icon={i.icon} />}
+                            value={user[i.field]}
+                            onChangeText={t => setState(t, i.field)}
+                            style={MyStyles.input}
                             mode="outlined"
-                            style={MyStyles.menuAnchor}
-                            labelStyle={MyStyles.menuText}
-                            onPress={() => setMenuVisible(true)}
-                        >
-                            Vai trò: {role === 'admin' ? 'Quản trị viên' : role === 'organizer' ? 'Nhà tổ chức' : 'Khách tham gia'}
-                        </Button>
-                    }
+                        />
+                    </View>
+                ))}
+                <View style={[MyStyles.m, { zIndex: 1 }]}>
+                    <Menu
+                        visible={menuVisible}
+                        onDismiss={() => setMenuVisible(false)}
+                        anchor={
+                            <Button
+                                mode="outlined"
+                                style={MyStyles.menuAnchor}
+                                labelStyle={MyStyles.menuText}
+                                onPress={() => setMenuVisible(true)}
+                            >
+                                Vai trò: {role === 'admin' ? 'Quản trị viên' : role === 'organizer' ? 'Nhà tổ chức' : 'Khách tham gia'}
+                            </Button>
+                        }
+                    >
+                        <Menu.Item
+                            onPress={() => { setRole("admin"); setMenuVisible(false); }}
+                            title="Quản trị viên"
+                            style={MyStyles.menuItem}
+                            titleStyle={MyStyles.menuItemTitle}
+                        />
+                        <Menu.Item
+                            onPress={() => { setRole("organizer"); setMenuVisible(false); }}
+                            title="Nhà tổ chức sự kiện"
+                            style={MyStyles.menuItem}
+                            titleStyle={MyStyles.menuItemTitle}
+                        />
+                        <Menu.Item
+                            onPress={() => { setRole("participant"); setMenuVisible(false); }}
+                            title="Khách tham gia"
+                            style={MyStyles.menuItem}
+                            titleStyle={MyStyles.menuItemTitle}
+                        />
+                    </Menu>
+                </View>
+                <View>
+
+                </View>
+                <TouchableOpacity style={MyStyles.m} onPress={picker}>
+                    <Text style={MyStyles.text}>Chọn ảnh đại diện...</Text>
+                </TouchableOpacity>
+
+                <View>
+                    {/* {user?.avatar && <Image source={{ uri: user.avatar.uri }} style={[MyStyles.avatar, MyStyles.m]} />} */}
+                </View>
+
+                <View>
+                    {user?.image && <Text style={{ color: "blue" }}>{user.image.fileName || user.image.name}</Text>}
+                </View>
+
+                <Button
+                    onPress={register}
+                    disabled={loading}
+                    loading={loading}
+                    style={[MyStyles.m, MyStyles.button]}
+                    labelStyle={MyStyles.buttonText}
+                    mode="contained"
                 >
-                    <Menu.Item
-                        onPress={() => { setRole("admin"); setMenuVisible(false); }}
-                        title="Quản trị viên"
-                        style={MyStyles.menuItem}
-                        titleStyle={MyStyles.menuItemTitle}
-                    />
-                    <Menu.Item
-                        onPress={() => { setRole("organizer"); setMenuVisible(false); }}
-                        title="Nhà tổ chức sự kiện"
-                        style={MyStyles.menuItem}
-                        titleStyle={MyStyles.menuItemTitle}
-                    />
-                    <Menu.Item
-                        onPress={() => { setRole("participant"); setMenuVisible(false); }}
-                        title="Khách tham gia"
-                        style={MyStyles.menuItem}
-                        titleStyle={MyStyles.menuItemTitle}
-                    />
-                </Menu>
-            </View>
-            <View>
+                    Đăng ký
+                </Button>
+                <View style={{ height: "300px", width: "100%" }} />
 
-            </View>
-            <TouchableOpacity style={MyStyles.m} onPress={picker}>
-                <Text style={MyStyles.text}>Chọn ảnh đại diện...</Text>
-            </TouchableOpacity>
-
-            <View>
-                {/* {user?.avatar && <Image source={{ uri: user.avatar.uri }} style={[MyStyles.avatar, MyStyles.m]} />} */}
-            </View>
-
-            <View>
-                {user?.image && <Text style={{color: "blue"}}>{user.image.fileName || user.image.name}</Text>}
-            </View>
-
-            <Button
-                onPress={register}
-                disabled={loading}
-                loading={loading}
-                style={[MyStyles.m, MyStyles.button]}
-                labelStyle={MyStyles.buttonText}
-                mode="contained"
-            >
-                Đăng ký
-            </Button>
-            <View style={{ height: "300px", width: "100%" }} />
-
-        </ScrollView>
+            </ScrollView>
         </SafeAreaView>
     )
 

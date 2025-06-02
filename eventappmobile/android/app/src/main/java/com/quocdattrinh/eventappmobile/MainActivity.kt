@@ -1,4 +1,4 @@
-package com.anonymous.eventappmobile
+package com.quocdattrinh.eventappmobile
 
 import android.os.Build
 import android.os.Bundle

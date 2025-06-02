@@ -52,14 +52,6 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     parser_classes = [parsers.MultiPartParser]
     permission_classes = [permissions.AllowAny]
 
-    def perform_create(self, serializer):
-        avatar_file = self.request.FILES.get('avatar')
-        if avatar_file:
-            upload_result = cloudinary.uploader.upload(avatar_file)
-            serializer.save(avatar=upload_result['secure_url'])  # lưu URL vào CloudinaryField
-        else:
-            serializer.save()
-
     @action(methods=['post'], url_path='fcm-token', detail=False)
     def save_fcm_token(self, request):
         user = request.user

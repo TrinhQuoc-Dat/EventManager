@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#ccc"
   },
   ticketDetails: {
     flex: 1,
