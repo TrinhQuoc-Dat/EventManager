@@ -3,6 +3,7 @@ import uuid
 import requests
 import hmac
 import hashlib
+from EventApi import settings
 
 
 def create_momo_payment(amount, user_id, ticket_id, order_info, redirect_url, ipn_url):
@@ -48,5 +49,21 @@ def create_momo_payment(amount, user_id, ticket_id, order_info, redirect_url, ip
     response = requests.post(endpoint, data=data,
                              headers={'Content-Type': 'application/json', 'Content-Length': str(clen)})
 
-    print(response.json()['payUrl'])
+    print(response.json())
     return response.json()
+
+if __name__ == "__main__":
+    order_info = "Thanh toán sự kiện"
+    redirect_url = settings.DOMAIN + "/ticket/payment-success/"
+    ipn_url = settings.DOMAIN + "/ticket/payment-ipn/"
+
+    result = create_momo_payment(
+        amount="50000",
+        user_id=1,
+        ticket_id=6,
+        order_info=order_info,
+        redirect_url=redirect_url,
+        ipn_url=ipn_url,
+    )
+    create_momo_payment()
+

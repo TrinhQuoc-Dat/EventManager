@@ -1,12 +1,13 @@
-import { Alert, View } from "react-native";
+import { Alert, Linking, View } from "react-native";
 import { Button, Text, Title } from "react-native-paper";
-import { authApis, endpoints } from "../../configs/Apis";
+import { authApis, BASE_URL, endpoints } from "../../configs/Apis";
 import { useRoute, useNavigation } from '@react-navigation/native';
 import styles from "./styles";
 import { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { navigate } from "../../service/NavigationService";
+import PaymentMomo from "./PaymentMomo";
 
 const PaymentTicket = () => {
 
@@ -43,7 +44,33 @@ const PaymentTicket = () => {
     };
 
 
-    const handlePaymentMOMO = () => {
+    const handlePaymentMOMO = async () => {
+        try {
+            const token = await AsyncStorage.getItem("token");
+            console.log(`${BASE_URL}api/payment-ticket/payment/momo/`);
+
+            const formData = new FormData();
+            formData.append("amount", parseInt(ticket.ticket_price));
+            formData.append("ticket_id", ticket.id);
+
+            const response = await fetch(`${BASE_URL}api/payment-ticket/payment/momo/`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+            });
+            const data = await response.json();
+
+            if (data && data.payUrl) {
+                Linking.openURL(data.payUrl);
+            } else {
+                Alert.alert('Lỗi', 'Không lấy được liên kết thanh toán');
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Lỗi', 'Không thể thực hiện thanh toán');
+        }
 
     }
 
