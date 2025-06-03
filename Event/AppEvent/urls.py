@@ -15,6 +15,7 @@ router.register('payment', views.PaymentViesSet, basename='payment')
 router.register('ticket-types', views.TicketTypeViewSet, basename='ticket-type')
 router.register('comments', views.CommentViewSet, basename='comment')
 router.register('event-date', views.EventDateViewSet, basename='event-date')
+router.register('discount-codes', views.DiscountCodeViewSet, basename='discount-code')
 
 urlpatterns = [
     path('api/', include(router.urls)),

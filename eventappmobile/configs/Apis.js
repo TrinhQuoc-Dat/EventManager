@@ -3,8 +3,9 @@ import axios from "axios";
 // const BASE_URL = 'https://trinhquocdat.pythonanywhere.com/';
 
 
-export const BASE_URL = "http://172.16.112.101:8000/"
+export const BASE_URL = "http://172.16.112.104:8000/"
 // const BASE_URL = "http://192.168.1.12:8000/"
+
 
 export const endpoints = {
     'login': '/api/user/login/',
@@ -32,7 +33,9 @@ export const endpoints = {
     'delete-date': (dateId) => `/api/event-date/${dateId}/`,
     'ticket-type-of-date': (dateId) => `/api/event-date/${dateId}/ticket-types/`,
     'delete-ticket-type': (ticketTypeId) => `/api/ticket-types/${ticketTypeId}/`,
-    'ticketed-events': '/api/payment-ticket/user-events/'
+    'ticketed-events': '/api/payment-ticket/user-events/',
+    "event-stats": (eventId) => `/api/event/${eventId}/stats/`,
+    "discount-codes": `/api/discount-codes/`,
     
 
 };

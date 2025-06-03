@@ -1,13 +1,13 @@
+
 import { Alert, Linking, View } from "react-native";
-import { Button, Text, Title } from "react-native-paper";
+import { Button, Text, TextInput, Title } from "react-native-paper";
 import { authApis, BASE_URL, endpoints } from "../../configs/Apis";
 import { useRoute, useNavigation } from '@react-navigation/native';
 import styles from "./styles";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { navigate } from "../../service/NavigationService";
-import PaymentMomo from "./PaymentMomo";
 
 const PaymentTicket = () => {
 
@@ -16,6 +16,39 @@ const PaymentTicket = () => {
 
     const [transId,] = useState('');
     const [orderId,] = useState('');
+    const [discountCode, setDiscountCode] = useState('');
+
+    useEffect(() => {
+        const handleUrl = (event) => {
+            const openedAt = Date.now();
+            const url = event.url;
+            const params = new URLSearchParams(url.split('?')[1]);
+            const resultCode = params.get('resultCode');
+            const message = params.get('message') || '';
+
+            const now = Date.now();
+            const delay = now - openedAt;
+            if (delay > 1000)
+                if (resultCode === '0') {
+                    handlePayment();
+                    navigate('tabs', { screen: 'paymentHistory' });
+                } else {
+                    Alert.alert('❌ Thất bại', message || 'Thanh toán MoMo thất bại');
+                }
+        };
+
+        // Đăng ký sự kiện mở app qua URL (deep link)
+        const listener = Linking.addEventListener('url', handleUrl);
+
+        // Trường hợp app mở từ đầu bằng deeplink
+        Linking.getInitialURL().then((url) => {
+            if (url) handleUrl({ url });
+        });
+
+        return () => {
+            listener.remove();
+        };
+    }, []);
 
     const handlePayment = async () => {
         try {
@@ -26,6 +59,7 @@ const PaymentTicket = () => {
                     transId: transId,
                     orderId: orderId,
                     payment_method: 'payment',
+                    discount_code: discountCode.trim(),
                 },
                 {
                     headers: {
@@ -64,6 +98,7 @@ const PaymentTicket = () => {
 
             if (data && data.payUrl) {
                 Linking.openURL(data.payUrl);
+
             } else {
                 Alert.alert('Lỗi', 'Không lấy được liên kết thanh toán');
             }
@@ -95,6 +130,15 @@ const PaymentTicket = () => {
                         {' '}
                         Giá: <Text style={styles.price}> {ticket?.ticket_price.toLocaleString('vi-VN')}  VNĐ</Text>
                     </Text>
+                </View>
+                <View style={styles.discountContainer}>
+                    <TextInput
+                        style={styles.discountInput}
+                        value={discountCode}
+                        onChangeText={setDiscountCode}
+                        placeholder="Nhập mã giảm giá"
+                        autoCapitalize="characters"
+                    />
                 </View>
 
                 <Button

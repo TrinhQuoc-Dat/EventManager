@@ -17,6 +17,7 @@ from .models import (
     StatusTicket,
     StatusNotification,
     TicketType,
+    DiscountCode
 )
 from AppEvent import dao, serializers, paginations, perms
 from django.shortcuts import redirect
@@ -249,6 +250,8 @@ class EventViewSet(
             return serializers.EventDateSerializer
         if self.action in ["list"]:
             return serializers.EventSerializer
+        if self.action in ["get_event_stats"]:
+            return serializers.EventStatsSerializer
         return serializers.EventDetailSerializer
 
     def get_permissions(self):
@@ -459,6 +462,48 @@ class EventViewSet(
                 serializers.CommentSerializer(comments, many=True).data,
                 status=status.HTTP_200_OK,
             )
+        
+    @action(methods=["get"], detail=True, url_path="stats")
+    def get_event_stats(self, request, pk):
+        event = self.get_object()
+        # Tính số lượng vé bán ra
+        payment_tickets = PaymentTicket.objects.filter(
+            ticket__event_date__event=event,
+            payment__status=StatusPayment.SUCCESS
+        )
+        total_tickets_sold = payment_tickets.count()
+        # Tính doanh thu
+        total_revenue = sum(pt.payment.amount for pt in payment_tickets)
+        # Thống kê theo loại vé
+        ticket_types_stats = []
+        ticket_types = TicketType.objects.filter(event_date__event=event, active=True)
+        for ticket_type in ticket_types:
+            tickets_sold = PaymentTicket.objects.filter(
+                ticket=ticket_type,
+                payment__status=StatusPayment.SUCCESS
+            ).count()
+            revenue = sum(
+                pt.payment.amount
+                for pt in PaymentTicket.objects.filter(
+                    ticket=ticket_type,
+                    payment__status=StatusPayment.SUCCESS
+                )
+            )
+            ticket_types_stats.append({
+                "ticket_type": ticket_type.name,
+                "tickets_sold": tickets_sold,
+                "revenue": float(revenue),
+            })
+
+        data = {
+            "event_title": event.title,
+            "total_tickets_sold": total_tickets_sold,
+            "total_revenue": float(total_revenue),
+            "ticket_types_stats": ticket_types_stats,
+        }
+        serializer = serializers.EventStatsSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TicketViewSet(
@@ -528,35 +573,60 @@ class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
     @action(methods=["post"], url_path="payment/momo", detail=False)
     def momo_payment_view(self, request):
         order_info = "Thanh toán sự kiện"
-        redirect_url = settings.DOMAIN + "/ticket/payment-success/"
+        # redirect_url = settings.DOMAIN + "/ticket/payment-success/"
+        redirect_url = "exp://172.16.112.104:8081"
         ipn_url = settings.DOMAIN + "/ticket/payment-ipn/"
 
-        print(request.data["amount"])
-        print(request.data["ticket_id"])
+        discount_code = request.data.get("discount_code")
+        ticket_id = request.data.get("ticket_id")
+        amount = request.data.get("amount")
 
-        result = create_momo_payment(
-            amount=request.data["amount"],
-            user_id=request.user.id,
-            ticket_id=request.data["ticket_id"],
-            order_info=order_info,
-            redirect_url=redirect_url,
-            ipn_url=ipn_url,
-        )
-        print("Phản hồi từ MoMo:", result)
+        try:
+            ticket = TicketType.objects.get(id=ticket_id)
+            if discount_code:
+                try:
+                    discount = DiscountCode.objects.get(code=discount_code, ticket_type=ticket)
+                    if not discount.is_valid():
+                        return Response(
+                            {"error": "Mã giảm giá không hợp lệ hoặc đã hết hạn"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    amount = amount * (1 - discount.discount_percentage / 100)
+                except DiscountCode.DoesNotExist:
+                    return Response(
+                        {"error": "Mã giảm giá không tồn tại"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
-        pay_url = result.get("payUrl")
-        if not pay_url:
-            return Response(
-                {"error": "MoMo không trả về đường dẫn thanh toán", "momo_response": result},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            result = create_momo_payment(
+                amount=amount,
+                user_id=request.user.id,
+                ticket_id=ticket_id,
+                order_info=order_info,
+                redirect_url=redirect_url,
+                ipn_url=ipn_url,
             )
-        return Response({"payUrl": pay_url})
+
+            pay_url = result.get("payUrl")
+            if not pay_url:
+                return Response(
+                    {"error": "MoMo không trả về đường dẫn thanh toán", "momo_response": result},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            return Response({"payUrl": pay_url})
+
+        except TicketType.DoesNotExist:
+            return Response(
+                {"error": "Loại vé không tồn tại"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(methods=["post"], url_path="payment", detail=False)
     def payment_view(self, request):
         user = request.user
         data = request.data
         ticket_id = data.get("ticket_id")
+        discount_code = data.get("discount_code")
 
         try:
             ticket = TicketType.objects.get(id=ticket_id)
@@ -569,8 +639,23 @@ class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
             return Response({"error": "Vé đã hết."}, status=status.HTTP_400_BAD_REQUEST)
 
         amount = ticket.ticket_price
+        discount = None
 
-        # Giả định client đã thực hiện thanh toán xong, gửi về transId và orderId
+        if discount_code:
+            try:
+                discount = DiscountCode.objects.get(code=discount_code, ticket_type=ticket)
+                if not discount.is_valid():
+                    return Response(
+                        {"error": "Mã giảm giá không hợp lệ hoặc đã hết hạn"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                amount = amount * (1 - discount.discount_percentage / 100)
+            except DiscountCode.DoesNotExist:
+                return Response(
+                    {"error": "Mã giảm giá không tồn tại"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
         payment = Payment.objects.create(
             amount=amount,
             payment_method=data.get("payment_method", "momo"),
@@ -581,13 +666,18 @@ class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
         )
 
         payment_ticket = PaymentTicket.objects.create(
-            status="booked", user=user, ticket=ticket, payment=payment, qr_code=random()
+            status="booked",
+            user=user,
+            ticket=ticket,
+            payment=payment,
+            qr_code=str(uuid.uuid4()),
+            discount_code=discount
         )
 
-        payment_ticket.qr_code = str(uuid.uuid4())
-        payment_ticket.save()
+        if discount:
+            discount.used_count += 1
+            discount.save()
 
-        # Trừ số lượng còn lại
         ticket.so_luong -= 1
         ticket.save()
 
@@ -618,11 +708,9 @@ class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
             user=user, payment__status=StatusPayment.SUCCESS
         ).select_related("ticket__event_date__event")
 
-        # Lấy danh sách sự kiện, loại bỏ trùng lặp
         events = {pt.ticket.event_date.event for pt in payment_tickets}
         events = list(events)
 
-        # Áp dụng phân trang
         page = self.paginate_queryset(events)
         if page is not None:
             serializer = serializers.EventSerializer(
@@ -787,3 +875,11 @@ def google_auth(request):
         )
     except Exception as e:
         return Response({"error": "Invalid token"}, status=400)
+    
+class DiscountCodeViewSet(viewsets.ModelViewSet):
+    queryset = DiscountCode.objects.filter(active=True)
+    serializer_class = serializers.DiscountCodeSerializer
+    permission_classes = [permissions.IsAuthenticated, perms.IsOrganizer]
+
+    def perform_create(self, serializer):
+        serializer.save()

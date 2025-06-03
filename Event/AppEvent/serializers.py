@@ -1,6 +1,6 @@
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 from rest_framework import serializers
-from .models import Category, User, Event, Ticket, Payment, PaymentTicket, TicketType, Comment, EventDate
+from .models import Category, User, Event, Ticket, Payment, PaymentTicket, TicketType, Comment, EventDate, DiscountCode
 
 
 class CategorySerializer(ModelSerializer):
@@ -77,7 +77,8 @@ class EventSerializer(ItemSerializer):
 
     class Meta:
         model = Event
-        fields = ['id', 'title', 'image', 'location', 'location_name', 'price', 'category_id', 'event_dates']
+        fields = ['id', 'title', 'image', 'location', 'location_name', 'kinh_do', 'vi_do', 'price', 'category_id', 'event_dates']
+        read_only_fields = ['kinh_do', 'vi_do']
     
     def get_price(self, obj):
         ticket_types = TicketType.objects.filter(event_date__event=obj, active=True)
@@ -109,7 +110,15 @@ class EventDetailSerializer(ItemSerializer):
         read_only_fields  = ['organizer', 'kinh_do', 'vi_do']
 
     
-    
+class EventStatsSerializer(serializers.Serializer):
+    event_title = serializers.CharField()
+    total_tickets_sold = serializers.IntegerField()
+    total_revenue = serializers.FloatField()
+    ticket_types_stats = serializers.ListField(
+        child=serializers.DictField(
+            child=serializers.CharField()
+        )
+    ) 
     
 
 class CommentUserSerializer(ModelSerializer):
@@ -167,7 +176,7 @@ class PaymentTicketSerializer(ModelSerializer):
         model = PaymentTicket
         fields = [
             'id', 'created_date', 'qr_code', 'status', 'payment',
-            'ticket', 'user'
+            'ticket', 'user', 'discount_code'
         ]
 
 
@@ -182,3 +191,16 @@ class PaymentSerializer(ModelSerializer):
     class Meta:
         model = Payment
         fields = "__all__"
+
+class DiscountCodeSerializer(ModelSerializer):
+    class Meta:
+        model = DiscountCode
+        fields = ['id', 'code', 'discount_percentage', 'ticket_type', 'max_usage', 'used_count', 'valid_from', 'valid_until']
+        read_only_fields = ['used_count']
+
+    def validate(self, data):
+        if data['valid_from'] >= data['valid_until']:
+            raise serializers.ValidationError("Ngày bắt đầu phải nhỏ hơn ngày kết thúc.")
+        if data['discount_percentage'] <= 0 or data['discount_percentage'] > 100:
+            raise serializers.ValidationError("Phần trăm giảm giá phải nằm trong khoảng 0-100.")
+        return data

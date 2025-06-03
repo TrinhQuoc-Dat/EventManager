@@ -47,18 +47,25 @@ const Profile = () => {
           >
             Đăng xuất
           </Button>
-          {user.role !== "participant" ? (<>
-            <Button
-              style={styles.logoutBtn}
-              onPress={() => navigate("userevents")}
-              mode="contained"
-              labelStyle={{ fontSize: 16 }}
-            >
-              Sự kiện của tôi
-            </Button>
-
+          {user.role !== "participant" ? (
+            <>
+              <Button
+                style={styles.logoutBtn}
+                onPress={() => navigate("userevents")}
+                mode="contained"
+                labelStyle={{ fontSize: 16 }}
+              >
+                Sự kiện của tôi
+              </Button>
+              <Button
+                style={styles.logoutBtn}
+                onPress={() => navigate("event-stats")}
+                mode="contained"
+                labelStyle={{ fontSize: 16 }}
+              >
+                Thống kê và báo cáo
+              </Button>
             </>
-            
           ) : (
             <Button
               style={styles.logoutBtn}

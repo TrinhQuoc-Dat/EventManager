@@ -1,9 +1,8 @@
-// PaymentScreen.js
 import React, { useEffect } from 'react';
 import { ActivityIndicator, View, Alert } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { BASE_URL } from '../../configs/Apis';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from '../../configs/Apis';
 
 const PaymentMomo = ({ ticketId, amount }) => {
 
@@ -28,9 +27,6 @@ const PaymentMomo = ({ ticketId, amount }) => {
                 if (data && data.payUrl) {
                     const result = await WebBrowser.openBrowserAsync(data.payUrl);
                     print(result);
-
-                    // Nếu thanh toán thành công, sau khi Momo redirect, bạn có thể xử lý bằng IPN phía server
-
                 } else {
                     Alert.alert('Lỗi', 'Không lấy được liên kết thanh toán');
                 }
