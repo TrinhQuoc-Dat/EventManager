@@ -1,5 +1,5 @@
 import { Alert, View } from "react-native";
-import { Button, Text, Title } from "react-native-paper";
+import { Button, Text, TextInput, Title } from "react-native-paper";
 import { authApis, endpoints } from "../../configs/Apis";
 import { useRoute, useNavigation } from '@react-navigation/native';
 import styles from "./styles";
@@ -15,6 +15,7 @@ const PaymentTicket = () => {
 
     const [transId,] = useState('');
     const [orderId,] = useState('');
+    const [discountCode, setDiscountCode] = useState('');
 
     const handlePayment = async () => {
         try {
@@ -25,6 +26,7 @@ const PaymentTicket = () => {
                     transId: transId,
                     orderId: orderId,
                     payment_method: 'payment',
+                    discount_code: discountCode.trim(),
                 },
                 {
                     headers: {
@@ -68,6 +70,15 @@ const PaymentTicket = () => {
                         {' '}
                         Giá: <Text style={styles.price}> {ticket?.ticket_price.toLocaleString('vi-VN')}  VNĐ</Text>
                     </Text>
+                </View>
+                <View style={styles.discountContainer}>
+                    <TextInput
+                        style={styles.discountInput}
+                        value={discountCode}
+                        onChangeText={setDiscountCode}
+                        placeholder="Nhập mã giảm giá"
+                        autoCapitalize="characters"
+                    />
                 </View>
 
                 <Button

@@ -25,6 +25,8 @@ import UserEvents from "./component/Event/UserEvents";
 import Chat from "./component/Chats/Chat";
 import TicketedEvents from "./component/Event/TicketedEvents";
 import ContactList from "./component/Chats/ContactList";
+import MapEvents from "./component/Event/MapEvents";
+import EventStats from "./component/Event/EventStats";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -54,6 +56,7 @@ const TabNavigator = () => {
               <Tab.Screen name="checkin" component={ScannerTicket} options={{ title: "Check in", tabBarIcon: ({ color, size }) => <MaterialIcons name="check" color={color} size={size} /> }} />
             </>)}
           <Tab.Screen name="profile" component={ProfiletNavigator}  options={{ headerShown: false ,title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
+          <Tab.Screen name="mapevent" component={MapNavigator}  options={{ headerShown: true ,title: "Vị trí sự kiện", tabBarIcon: () => <Icon size={30} source="account" /> }} />
           {/* <Tab.Screen name="chat" component={Chat}  options={{ headerShown: false ,title: "Chat", tabBarIcon: () => <Icon size={30} source="account" /> }} /> */}
         </>
       )}
@@ -71,9 +74,22 @@ const ProfiletNavigator = () => {
       <Stack.Screen name='ticketed-events' component={TicketedEvents} options={{ title: "Sự kiện đã thanh toán", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
       <Stack.Screen name='chat' component={Chat} options={{ title: "Sự kiện đã thanh toán", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
       <Stack.Screen name='contact-list' component={ContactList} options={{ title: "Tin nhắn", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
+      <Stack.Screen name="mapevent2" component={MapEvents}  options={{ headerShown: false ,title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
+      <Stack.Screen name="event-stats" component={EventStats}  options={{ headerShown: false ,title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
+
     </Stack.Navigator>
   );
 }
+
+const MapNavigator = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name='mapevent' component={MapEvents} options={{ title: "Bản đồ sự kiện", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
+      <Stack.Screen name='eventdetail3' component={EventDetail} options={{ title: "Chi tiết sự kiện", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
+      <Stack.Screen name='chat' component={Chat} options={{ title: "Sự kiện đã thanh toán", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
+
+    </Stack.Navigator>
+  )}
 
 const HometNavigator = () => {
   return (

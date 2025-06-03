@@ -208,6 +208,31 @@ class PaymentTicket(BaseModel):
     user = models.ForeignKey(User, null=False, on_delete=models.RESTRICT)
     ticket = models.ForeignKey(TicketType, null=False, on_delete=models.RESTRICT)
     payment = models.ForeignKey(Payment, null=False, on_delete=models.RESTRICT)
+    discount_code = models.ForeignKey('DiscountCode', null=True, blank=True, on_delete=models.SET_NULL)
 
     class Meta:
         unique_together = ('user', 'ticket', 'payment')
+
+class DiscountCode(BaseModel):
+    code = models.CharField(max_length=20, unique=True)
+    discount_percentage = models.DecimalField(
+        max_digits=5, decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Phần trăm giảm giá (0-100)"
+    )
+    ticket_type = models.ForeignKey(TicketType, null=False, on_delete=models.CASCADE)
+    max_usage = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    used_count = models.IntegerField(default=0)
+    valid_from = models.DateTimeField(default=timezone.now)
+    valid_until = models.DateTimeField()
+
+    def __str__(self):
+        return f"{self.code} ({self.discount_percentage}% off)"
+
+    def is_valid(self):
+        now = timezone.now()
+        return (
+            self.active and
+            self.valid_from <= now <= self.valid_until and
+            (self.max_usage == 0 or self.used_count < self.max_usage)
+        )

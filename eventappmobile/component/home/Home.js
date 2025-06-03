@@ -1,140 +1,3 @@
-// import React, { useState, useEffect } from "react";
-// import {
-//   View,
-//   Text,
-//   FlatList,
-//   StyleSheet,
-//   TouchableOpacity,
-//   ActivityIndicator,
-//   FlatListComponent,
-//   Image,
-//   ScrollView,
-// } from "react-native";
-// import axios from "axios";
-// import Apis, { endpoints } from "../../configs/Apis";
-// import { SafeAreaView } from "react-native";
-// import { Chip, List, Searchbar } from "react-native-paper";
-// import MyStyles from "../../styles/MyStyles";
-// import { useNavigation } from "@react-navigation/native";
-// import { navigate } from "../../service/NavigationService";
-
-// const Home = () => {
-//   const [categories, setCategories] = useState([]);
-//   const [events, setEvents] = useState([]);
-//   const [loading, setLoading] = useState(false);
-//   const [q, setQ] = useState();
-//   const [page, setPage] = useState(1);
-//   const [cateId, setCateId] = useState(null);
-//   const nav = useNavigation();
-
-//   const loadCates = async () => {
-//     let res = await Apis.get(endpoints["categories"]);
-//     setCategories(res.data);
-//   };
-
-//   const loadEvents = async () => {
-//     if (page > 0) {
-//       try {
-//         setLoading(true);
-//         let url = `${endpoints["events"]}?page=${page}`;
-
-//         if (q) {
-//           url = `${url}&q=${q}`;
-//         }
-
-//         if (cateId) {
-//           url = `${url}&category_id=${cateId}`;
-//         }
-
-//         let res = await Apis.get(url);
-//         setEvents([...events, ...res.data.results]);
-
-//         if (res.data.next === null) {
-//           setPage(0);
-//         }
-//       } catch {
-//         // console.error(ex);
-//       } finally {
-//         setLoading(false);
-//       }
-//     }
-//   };
-
-//   const loadMore = () => {
-//     if (!loading && page > 0) {
-//       setPage((page) => page + 1);
-//     }
-//   };
-
-//   const search = (value, callback) => {
-//     setPage(1);
-//     setEvents([]);
-//     callback(value);
-//   };
-
-//   useEffect(() => {
-//     loadCates();
-//   }, []);
-
-//   useEffect(() => {
-//     let timer = setTimeout(() => {
-//       loadEvents();
-//     }, 500);
-
-//     return () => clearTimeout(timer);
-//   }, [q, cateId, page]);
-
-//   return (
-//     <SafeAreaView>
-//       <ScrollView horizontal={true}>
-//         <TouchableOpacity onPress={() => search(null, setCateId)}>
-//           <Chip icon={"label"} style={MyStyles.m}>
-//             Tất cả
-//           </Chip>
-//         </TouchableOpacity>
-
-//         {categories.map((c) => (
-//           <TouchableOpacity key={c.id} onPress={() => search(c.id, setCateId)}>
-//             <Chip icon={"label"} style={[MyStyles.m]}>
-//               {c.name}
-//             </Chip>
-//           </TouchableOpacity>
-//         ))}
-//       </ScrollView>
-
-//       <Searchbar
-//         placeholder="Tìm kiếm sự kiện..."
-//         value={q}
-//         onChangeText={(t) => search(t, setQ)}
-//       />
-
-//       <FlatList
-//         style={MyStyles.p}
-//         onEndReached={loadMore}
-//         ListFooterComponent={loading && <ActivityIndicator />}
-//         data={events}
-//         renderItem={({ item }) => (
-//           <List.Item
-//             title={item.title}
-//             description={(<View>
-//               <Text>Từ {item.price} VNĐ</Text>
-//               <Text>{item.start_date_time}</Text>
-//             </View>)}
-//             left={() => (
-//               <TouchableOpacity onPress={() => navigate('eventdetail', {'eventId': item.id})}>
-//                 <Image style={MyStyles.avatar} source={{ uri: item.image }} />
-//               </TouchableOpacity>
-//             )}
-
-//           />
-//         )}
-//       />
-//     </SafeAreaView>
-//   );
-// };
-
-// export default Home;
-
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -145,14 +8,19 @@ import {
   ActivityIndicator,
   Image,
   ScrollView,
+  Dimensions,
 } from "react-native";
 import Apis, { endpoints } from "../../configs/Apis";
 import { SafeAreaView } from "react-native";
-import { Chip, List, Searchbar } from "react-native-paper";
+import { Chip, Card, Searchbar } from "react-native-paper";
 import MyStyles from "../../styles/MyStyles";
 import { navigate } from "../../service/NavigationService";
 import moment from "moment";
 import "moment/locale/vi";
+
+// Lấy chiều rộng màn hình để tính toán kích thước cột
+const { width } = Dimensions.get("window");
+const columnWidth = (width - 40) / 2;
 
 const Home = () => {
   const [categories, setCategories] = useState([]);
@@ -161,49 +29,61 @@ const Home = () => {
   const [q, setQ] = useState();
   const [page, setPage] = useState(1);
   const [cateId, setCateId] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
 
   const loadCates = async () => {
-    let res = await Apis.get(endpoints["categories"]);
-    setCategories(res.data);
+    try {
+      let res = await Apis.get(endpoints["categories"]);
+      setCategories(res.data);
+    } catch (ex) {
+      console.error("Error loading categories:", ex);
+    }
   };
 
   const loadEvents = async () => {
-    if (page > 0) {
-      try {
-        setLoading(true);
-        let url = `${endpoints["events"]}?page=${page}`;
+    if (page <= 0 || !hasMore) return;
 
-        if (q) {
-          url = `${url}&q=${q}`;
-        }
+    try {
+      setLoading(true);
+      let url = `${endpoints["events"]}?page=${page}`;
 
-        if (cateId) {
-          url = `${url}&category_id=${cateId}`;
-        }
-
-        let res = await Apis.get(url);
-        setEvents([...events, ...res.data.results]);
-
-        if (res.data.link.next === null) {
-          setPage(0);
-        }
-      } catch {
-        // console.error(ex);
-      } finally {
-        setLoading(false);
+      if (q) {
+        url = `${url}&q=${q}`;
       }
+
+      if (cateId) {
+        url = `${url}&category_id=${cateId}`;
+      }
+
+      let res = await Apis.get(url);
+
+      if (res.data.results.length === 0 || res.data.next === null) {
+        setHasMore(false);
+        setPage(0);
+      } else {
+        setEvents((prevEvents) => [...prevEvents, ...res.data.results]);
+      }
+    } catch (ex) {
+      console.error("Error loading events:", ex);
+      if (ex.response && ex.response.status === 404) {
+        setHasMore(false);
+        setPage(0);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const loadMore = () => {
-    if (!loading && page > 0) {
-      setPage((page) => page + 1);
+    if (!loading && hasMore && page > 0) {
+      setPage((prevPage) => prevPage + 1);
     }
   };
 
   const search = (value, callback) => {
     setPage(1);
     setEvents([]);
+    setHasMore(true);
     callback(value);
   };
 
@@ -222,12 +102,8 @@ const Home = () => {
   const formatEventDates = (eventDates) => {
     moment.locale("vi");
     if (eventDates.length === 0) return "Chưa có ngày";
-    const firstDate = moment(eventDates[0].event_date).format("DD/MM/YYYY");
-    if (eventDates.length === 1) return firstDate;
-    const lastDate = moment(
-      eventDates[eventDates.length - 1].event_date
-    ).format("DD/MM/YYYY");
-    return `${firstDate} - ${lastDate}`;
+    const firstDate = moment(eventDates[0].event_date).format("DD [tháng] MM, YYYY");
+    return firstDate;
   };
 
   const isEventFinished = (eventDates) => {
@@ -243,7 +119,7 @@ const Home = () => {
   };
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={styles.container}>
       <ScrollView horizontal={true}>
         <TouchableOpacity onPress={() => search(null, setCateId)}>
           <Chip icon={"label"} style={MyStyles.m}>
@@ -264,37 +140,119 @@ const Home = () => {
         placeholder="Tìm kiếm sự kiện..."
         value={q}
         onChangeText={(t) => search(t, setQ)}
+        style={styles.searchbar}
+        inputStyle={styles.searchbarInput} // Thêm style cho input bên trong
+        iconColor="#666" // Tùy chỉnh màu icon
       />
 
       <FlatList
-        style={MyStyles.p}
+        style={styles.flatList}
         onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
         ListFooterComponent={loading && <ActivityIndicator />}
         data={events}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
         renderItem={({ item }) => (
-          <List.Item
-            title={item.title}
-            description={() => (
-              <View>
-                <Text>Từ {item.price.toLocaleString("vi-VN")} VNĐ</Text>
-                <Text>{formatEventDates(item.event_dates)}</Text>
+          <TouchableOpacity
+            onPress={() => navigate("eventdetail2", { eventId: item.id })}
+            style={styles.cardContainer}
+          >
+            <Card style={styles.card}>
+              <Card.Cover
+                source={{ uri: item.image }}
+                style={styles.cardImage}
+                resizeMode="cover"
+              />
+              <Card.Content>
+                <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
+                  {item.title}
+                </Text>
+                <View style={styles.infoRow}>
+                  <Text style={styles.price}>
+                    Từ {item.price.toLocaleString("vi-VN")}đ
+                  </Text>
+                </View>
+                <Text style={styles.date}>
+                  {formatEventDates(item.event_dates)}
+                </Text>
                 {isEventFinished(item.event_dates) && (
-                  <Text style={{ color: "red" }}>đã diễn ra</Text>
+                  <Text style={styles.finishedLabel}>Đã diễn ra</Text>
                 )}
-              </View>
-            )}
-            left={() => (
-              <TouchableOpacity
-                onPress={() => navigate("eventdetail2", { eventId: item.id })}
-              >
-                <Image style={MyStyles.avatar} source={{ uri: item.image }} />
-              </TouchableOpacity>
-            )}
-          />
+              </Card.Content>
+            </Card>
+          </TouchableOpacity>
         )}
       />
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  searchbar: {
+    margin: 10,
+    height: 40, // Giảm chiều cao của Searchbar
+    borderRadius: 20, // Bo góc nhẹ
+    elevation: 2, // Giảm độ đổ bóng
+    backgroundColor: "#f5f5f5", // Màu nền nhẹ
+  },
+  searchbarInput: {
+    fontSize: 14, // Giảm kích thước font chữ trong input
+    paddingVertical: 0, // Giảm padding dọc để làm nhỏ hơn
+  },
+  flatList: {
+    paddingHorizontal: 10,
+  },
+  columnWrapper: {
+    justifyContent: "space-between",
+  },
+  cardContainer: {
+    width: columnWidth,
+    marginBottom: 10,
+  },
+  card: {
+    flex: 1,
+    borderRadius: 8,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  cardImage: {
+    height: 150,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+  },
+  title: {
+    fontSize: 14,
+    fontWeight: "bold",
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  price: {
+    fontSize: 12,
+    color: "#333",
+  },
+  date: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
+  },
+  finishedLabel: {
+    color: "red",
+    fontSize: 10,
+    marginTop: 4,
+  },
+});
 
 export default Home;

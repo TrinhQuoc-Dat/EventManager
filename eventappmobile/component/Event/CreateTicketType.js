@@ -1,173 +1,3 @@
-// import React, { useState } from "react";
-// import {
-//   View,
-//   Text,
-//   TextInput,
-//   Button,
-//   StyleSheet,
-//   Alert,
-//   TouchableOpacity,
-// } from "react-native";
-// import AsyncStorage from "@react-native-async-storage/async-storage";
-// import Apis, { authApis, endpoints } from "../../configs/Apis";
-// import { navigate } from "../../service/NavigationService";
-
-// const CreateTicketType = ({ route }) => {
-//   const eventId = route.params?.eventId; // Nhận eventId và event từ navigation
-//   const [ticketType, setTicketType] = useState({
-//     name: "",
-//     ticket_price: "",
-//     so_luong: "",
-//   });
-//   const [loading, setLoading] = useState(false);
-
-//   const handleCreateTicketType = async () => {
-//     const { name, ticket_price, so_luong } = ticketType;
-//     const token = await AsyncStorage.getItem("token");
-
-//     // Kiểm tra dữ liệu đầu vào
-//     if (!name || !ticket_price || !so_luong) {
-//       Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin!");
-//       return;
-//     }
-
-//     if (!token) {
-//       Alert.alert("Lỗi", "Không có token xác thực. Vui lòng đăng nhập lại!");
-//       return;
-//     }
-
-//     setLoading(true);
-//     try {
-//       const formData = new FormData();
-//       formData.append("name", name);
-//       formData.append("ticket_price", ticket_price);
-//       formData.append("so_luong", so_luong);
-
-//       const response = await authApis(token).post(
-//         endpoints["create-ticket-types"](eventId), // Giả sử bạn có endpoint để tạo ticket types
-//         formData,
-//         {
-//           headers: {
-//             "Content-Type": "multipart/form-data",
-//           },
-//         }
-//       );
-
-//       Alert.alert("Thành công", "Loại vé đã được tạo thành công!");
-//       console.log("Loại vé đã tạo:", response.data);
-
-//       // Reset form
-//       setTicketType({
-//         name: "",
-//         ticket_price: "",
-//         so_luong: "",
-//       });
-//     } catch (error) {
-//       console.error("Chi tiết lỗi:", {
-//         message: error.message,
-//         code: error.code,
-//         config: error.config,
-//         response: error.response?.data,
-//       });
-//       Alert.alert(
-//         "Lỗi",
-//         `Không thể tạo loại vé. Mã lỗi: ${error.response?.status || "N/A"} - ${
-//           error.message
-//         }`
-//       );
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   return (
-//     <View style={styles.container}>
-//       <Text style={styles.label}>Tên loại vé</Text>
-//       <TextInput
-//         style={styles.input}
-//         value={ticketType.name}
-//         onChangeText={(text) =>
-//           setTicketType((prev) => ({ ...prev, name: text }))
-//         }
-//         placeholder="Nhập tên loại vé (ví dụ: Siêu Vip)"
-//       />
-
-//       <Text style={styles.label}>Giá vé</Text>
-//       <TextInput
-//         style={styles.input}
-//         value={ticketType.ticket_price}
-//         onChangeText={(text) =>
-//           setTicketType((prev) => ({ ...prev, ticket_price: text }))
-//         }
-//         placeholder="Nhập giá vé (ví dụ: 5000000)"
-//         keyboardType="numeric"
-//       />
-
-//       <Text style={styles.label}>Số lượng</Text>
-//       <TextInput
-//         style={styles.input}
-//         value={ticketType.so_luong}
-//         onChangeText={(text) =>
-//           setTicketType((prev) => ({ ...prev, so_luong: text }))
-//         }
-//         placeholder="Nhập số lượng vé"
-//         keyboardType="numeric"
-//       />
-
-//       <Button
-//         title={loading ? "Đang tạo..." : "Tạo loại vé"}
-//         onPress={handleCreateTicketType}
-//         disabled={loading}
-//       />
-
-//       <TouchableOpacity style={styles.customButton} onPress={() => navigate('home')}>
-//                       <Text>XONG</Text>
-//                     </TouchableOpacity>
-      
-      
-//     </View>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     padding: 16,
-//     backgroundColor: "#f5f5f5",
-//   },
-//   label: {
-//     fontSize: 16,
-//     fontWeight: "bold",
-//     color: "#333",
-//     marginVertical: 8,
-//   },
-//   input: {
-//     backgroundColor: "#fff",
-//     borderRadius: 8,
-//     padding: 12,
-//     marginBottom: 12,
-//     borderWidth: 1,
-//     borderColor: "#ddd",
-//   },
-//   eventInfo: {
-//     fontSize: 14,
-//     color: "#555",
-//     marginTop: 16,
-//   }, customButton: {
-//     flexDirection: 'row',
-//     backgroundColor: '#e91e63',
-//     paddingVertical: 12,
-//     paddingHorizontal: 20,
-//     borderRadius: 8,
-//     alignItems: 'center',
-//     opacity: 1, // Có thể set về 0.6 nếu disabled
-//     justifyContent: 'center',
-//     marginTop: 15
-//   }
-// });
-
-// export default CreateTicketType;
-
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -185,18 +15,26 @@ import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { useNavigation } from "@react-navigation/native";
 
 const CreateTicketType = ({ route }) => {
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const nav = useNavigation();
   const eventId = route.params?.eventId;
   const ticketTypeId = route.params?.ticketTypeId;
-  const [isEditMode, setIsEditMode] = useState(!!ticketTypeId); // Quản lý trạng thái isEditMode
+  const [isEditMode, setIsEditMode] = useState(!!ticketTypeId);
   const [ticketType, setTicketType] = useState({
     name: "",
     ticket_price: "",
     so_luong: "",
     event_date_id: null,
   });
+  const [discountCode, setDiscountCode] = useState({
+    code: "",
+    discount_percentage: "",
+    max_usage: "",
+    valid_until: "",
+  });
   const [eventDates, setEventDates] = useState([]);
   const [ticketTypes, setTicketTypes] = useState([]);
+  const [discountCodes, setDiscountCodes] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const fetchEventDates = async () => {
@@ -209,6 +47,7 @@ const CreateTicketType = ({ route }) => {
           event_date_id: response.data.event_dates[0].id,
         }));
         fetchTicketTypes(response.data.event_dates[0].id);
+        fetchDiscountCodes(response.data.event_dates[0].id);
       }
     } catch (error) {
       console.error("Lỗi khi lấy danh sách ngày:", error);
@@ -220,11 +59,27 @@ const CreateTicketType = ({ route }) => {
     if (!dateId) return;
     try {
       const token = await AsyncStorage.getItem("token");
-      const response = await authApis(token).get(endpoints["ticket-type-of-date"](dateId));
+      const response = await authApis(token).get(
+        endpoints["ticket-type-of-date"](dateId)
+      );
       setTicketTypes(response.data || []);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách loại vé:", error);
       Alert.alert("Lỗi", "Không thể tải danh sách loại vé.");
+    }
+  };
+
+  const fetchDiscountCodes = async (dateId) => {
+    if (!dateId) return;
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const response = await authApis(token).get(
+        `${endpoints["discount-codes"]}?ticket_type__event_date=${dateId}`
+      );
+      setDiscountCodes(response.data || []);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách mã giảm giá:", error);
+      Alert.alert("Lỗi", "Không thể tải danh sách mã giảm giá.");
     }
   };
 
@@ -233,7 +88,9 @@ const CreateTicketType = ({ route }) => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem("token");
-      const response = await Apis.get(endpoints['delete-ticket-type'](ticketTypeId));
+      const response = await Apis.get(
+        endpoints["delete-ticket-type"](ticketTypeId)
+      );
       const ticketData = response.data;
       setTicketType({
         name: ticketData.name,
@@ -242,6 +99,7 @@ const CreateTicketType = ({ route }) => {
         event_date_id: ticketData.event_date_id,
       });
       fetchTicketTypes(ticketData.event_date_id);
+      fetchDiscountCodes(ticketData.event_date_id);
     } catch (error) {
       console.error("Lỗi khi tải loại vé:", error);
       Alert.alert("Lỗi", "Không thể tải thông tin loại vé.");
@@ -260,14 +118,15 @@ const CreateTicketType = ({ route }) => {
   const handleDateChange = (itemValue) => {
     setTicketType((prev) => ({ ...prev, event_date_id: itemValue }));
     fetchTicketTypes(itemValue);
+    fetchDiscountCodes(itemValue);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmitTicketType = async () => {
     const { name, ticket_price, so_luong, event_date_id } = ticketType;
     const token = await AsyncStorage.getItem("token");
 
     if (!name || !ticket_price || !so_luong || !event_date_id) {
-      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin!");
+      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin loại vé!");
       return;
     }
 
@@ -280,7 +139,7 @@ const CreateTicketType = ({ route }) => {
       formData.append("event_date_id", event_date_id);
 
       const endpoint = isEditMode
-        ? endpoints['delete-ticket-type'](ticketTypeId)
+        ? endpoints["delete-ticket-type"](ticketTypeId)
         : endpoints["add-ticket-type"](eventId);
       const method = isEditMode ? authApis(token).patch : authApis(token).post;
 
@@ -293,14 +152,13 @@ const CreateTicketType = ({ route }) => {
         isEditMode ? "Loại vé đã được cập nhật!" : "Loại vé đã được tạo!"
       );
 
-      // Đặt lại form và chế độ tạo mới
       setTicketType({
         name: "",
         ticket_price: "",
         so_luong: "",
         event_date_id: eventDates.length > 0 ? eventDates[0].id : null,
       });
-      setIsEditMode(false); // Chuyển về chế độ tạo mới
+      setIsEditMode(false);
       fetchTicketTypes(event_date_id);
     } catch (error) {
       console.error("Chi tiết lỗi:", {
@@ -318,14 +176,65 @@ const CreateTicketType = ({ route }) => {
     }
   };
 
+  const handleSubmitDiscountCode = async (ticketTypeId) => {
+    const { code, discount_percentage, max_usage, valid_until } = discountCode;
+    const token = await AsyncStorage.getItem("token");
+
+    if (
+      !code ||
+      !discount_percentage ||
+      !max_usage ||
+      !valid_until ||
+      !ticketTypeId
+    ) {
+      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin mã giảm giá!");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await authApis(token).post(endpoints["discount-codes"], {
+        code,
+        discount_percentage: parseFloat(discount_percentage),
+        max_usage: parseInt(max_usage),
+        valid_from: new Date().toISOString(),
+        valid_until,
+        ticket_type: ticketTypeId,
+      });
+
+      Alert.alert("Thành công", "Mã giảm giá đã được tạo!");
+      setDiscountCode({
+        code: "",
+        discount_percentage: "",
+        max_usage: "",
+        valid_until: "",
+      });
+      fetchDiscountCodes(ticketType.event_date_id);
+    } catch (error) {
+      console.error("Chi tiết lỗi:", {
+        message: error.message,
+        response: error.response?.data,
+      });
+      Alert.alert(
+        "Lỗi",
+        `Không thể tạo mã giảm giá: ${
+          error.response?.data?.detail || error.message
+        }`
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const removeTicketType = async (ticketTypeId) => {
     const token = await AsyncStorage.getItem("token");
     setLoading(true);
     try {
-      await authApis(token).delete(endpoints["delete-ticket-type"](ticketTypeId));
+      await authApis(token).delete(
+        endpoints["delete-ticket-type"](ticketTypeId)
+      );
       Alert.alert("Thành công", "Loại vé đã được xóa!");
       fetchTicketTypes(ticketType.event_date_id);
-      // Đặt lại chế độ tạo mới sau khi xóa
       setIsEditMode(false);
       setTicketType({
         name: "",
@@ -336,6 +245,23 @@ const CreateTicketType = ({ route }) => {
     } catch (error) {
       console.error("Lỗi khi xóa loại vé:", error);
       Alert.alert("Lỗi", "Không thể xóa loại vé!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeDiscountCode = async (discountCodeId) => {
+    const token = await AsyncStorage.getItem("token");
+    setLoading(true);
+    try {
+      await authApis(token).delete(
+        `${endpoints["discount-codes"]}${discountCodeId}/`
+      );
+      Alert.alert("Thành công", "Mã giảm giá đã được xóa!");
+      fetchDiscountCodes(ticketType.event_date_id);
+    } catch (error) {
+      console.error("Lỗi khi xóa mã giảm giá:", error);
+      Alert.alert("Lỗi", "Không thể xóa mã giảm giá!");
     } finally {
       setLoading(false);
     }
@@ -367,7 +293,9 @@ const CreateTicketType = ({ route }) => {
         <TextInput
           style={styles.input}
           value={ticketType.name}
-          onChangeText={(text) => setTicketType((prev) => ({ ...prev, name: text }))}
+          onChangeText={(text) =>
+            setTicketType((prev) => ({ ...prev, name: text }))
+          }
           placeholder="Nhập tên loại vé (ví dụ: Siêu Vip)"
         />
         <Text style={styles.label}>Giá vé</Text>
@@ -392,13 +320,77 @@ const CreateTicketType = ({ route }) => {
         />
         <TouchableOpacity
           style={styles.customButton}
-          onPress={handleSubmit}
+          onPress={handleSubmitTicketType}
           disabled={loading}
         >
           <Text>
-            {loading ? "Đang xử lý..." : isEditMode ? "Cập nhật loại vé" : "Tạo loại vé"}
+            {loading
+              ? "Đang xử lý..."
+              : isEditMode
+              ? "Cập nhật loại vé"
+              : "Tạo loại vé"}
           </Text>
         </TouchableOpacity>
+
+        <Text style={styles.label}>Tạo mã giảm giá</Text>
+        <Text style={styles.label}>Mã giảm giá</Text>
+        <TextInput
+          style={styles.input}
+          value={discountCode.code}
+          onChangeText={(text) =>
+            setDiscountCode((prev) => ({ ...prev, code: text }))
+          }
+          placeholder="Nhập mã giảm giá (ví dụ: SALE20)"
+        />
+        <Text style={styles.label}>Phần trăm giảm giá (%)</Text>
+        <TextInput
+          style={styles.input}
+          value={discountCode.discount_percentage}
+          onChangeText={(text) =>
+            setDiscountCode((prev) => ({ ...prev, discount_percentage: text }))
+          }
+          placeholder="Nhập phần trăm giảm giá (0-100)"
+          keyboardType="numeric"
+        />
+        <Text style={styles.label}>Số lần sử dụng tối đa</Text>
+        <TextInput
+          style={styles.input}
+          value={discountCode.max_usage}
+          onChangeText={(text) =>
+            setDiscountCode((prev) => ({ ...prev, max_usage: text }))
+          }
+          placeholder="Nhập số lần sử dụng tối đa"
+          keyboardType="numeric"
+        />
+        <Text style={styles.label}>Hiệu lực đến</Text>
+        <TouchableOpacity
+          style={styles.input}
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Text>{discountCode.valid_until || "Chọn ngày hết hạn"}</Text>
+        </TouchableOpacity>
+        <DateTimePickerModal
+          isVisible={showDatePicker}
+          mode="date"
+          date={
+            discountCode.valid_until
+              ? new Date(discountCode.valid_until)
+              : new Date()
+          }
+          onConfirm={(date) => {
+            setDiscountCode((prev) => ({
+              ...prev,
+              valid_until: date.toISOString().split("T")[0],
+            }));
+            setShowDatePicker(false);
+          }}
+          onCancel={() => setShowDatePicker(false)}
+          minimumDate={new Date()}
+          locale="vi-VN"
+          confirmText="Xác nhận"
+          cancelText="Hủy"
+        />
+
         <Text style={styles.label}>Danh sách loại vé</Text>
         {ticketTypes.length === 0 ? (
           <Text style={styles.dateText}>Chưa có loại vé nào được thêm.</Text>
@@ -406,14 +398,18 @@ const CreateTicketType = ({ route }) => {
           ticketTypes.map((ticket) => (
             <View key={ticket.id} style={styles.ticketContainer}>
               <Text style={styles.dateText}>
-                {ticket.name} - Giá: {ticket.ticket_price} - Số lượng: {ticket.so_luong}
+                {ticket.name} - Giá: {ticket.ticket_price} - Số lượng:{" "}
+                {ticket.so_luong}
               </Text>
               <View style={styles.buttonGroup}>
                 <TouchableOpacity
                   style={styles.editButton}
                   onPress={() => {
-                    nav.navigate("create-ticket-type", { eventId, ticketTypeId: ticket.id });
-                    setIsEditMode(true); // Chuyển sang chế độ chỉnh sửa
+                    nav.navigate("create-ticket-type", {
+                      eventId,
+                      ticketTypeId: ticket.id,
+                    });
+                    setIsEditMode(true);
                   }}
                   disabled={loading}
                 >
@@ -430,6 +426,32 @@ const CreateTicketType = ({ route }) => {
             </View>
           ))
         )}
+
+        <Text style={styles.label}>Danh sách mã giảm giá</Text>
+        {discountCodes.length === 0 ? (
+          <Text style={styles.dateText}>
+            Chưa có mã giảm giá nào được thêm.
+          </Text>
+        ) : (
+          discountCodes.map((code) => (
+            <View key={code.id} style={styles.ticketContainer}>
+              <Text style={styles.dateText}>
+                Mã: {code.code} - Giảm: {code.discount_percentage}% - Sử dụng:{" "}
+                {code.used_count}/{code.max_usage} - Hết hạn: {code.valid_until}
+              </Text>
+              <View style={styles.buttonGroup}>
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => removeDiscountCode(code.id)}
+                  disabled={loading}
+                >
+                  <Text style={styles.buttonText}>Xóa</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
+        )}
+
         <TouchableOpacity
           style={styles.customButton}
           onPress={() => nav.navigate("home")}

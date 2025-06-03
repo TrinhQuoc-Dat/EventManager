@@ -20,6 +20,7 @@ import { MyUserContext } from "../../configs/Context";
 import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { navigate } from "../../service/NavigationService";
 import { SafeAreaView } from "react-native-safe-area-context";
+import QRCode from "react-native-qrcode-svg";
 
 // Theme constants
 const theme = {
@@ -144,6 +145,13 @@ const usePostComment = (eventId, setEvent) => {
     loading,
   };
 };
+
+// const QRCodeItem = React.memo(({ qrCode }) => (
+//   <View style={styles.qrCodeContainer}>
+//     <Text style={styles.qrCodeTitle}>Mã QR để check-in</Text>
+//     <QRCode value={qrCode} size={200} backgroundColor="#fff" color="#000" />
+//   </View>
+// ));
 
 // Component: Event Header
 const EventHeader = React.memo(({ event }) => {
@@ -280,6 +288,12 @@ const EventDetail = ({ route }) => {
             ))}
           </Card.Content>
         </Card>
+        {/* <Card style={styles.card}>
+          <Card.Title title="Mã QR Check-in" />
+          <Card.Content>
+            <QRCodeItem qrCode={'2e569469-1dd4-4988-8178-8d205982be38'} />
+          </Card.Content>
+        </Card> */}
         <Card style={styles.card}>
           <Card.Title title="Bình luận" />
           <Card.Content>
