@@ -58,7 +58,19 @@ INSTALLED_APPS = [
     'social_django',
     'rest_framework_simplejwt',
     'corsheaders',
+    "channels",
 ]
+
+ASGI_APPLICATION = "EventApi.asgi.applicationSocket"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+            # "hosts": [("172.16.112.101", 6379)],
+        },
+    },
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -167,8 +179,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'eventdbv2',
         'USER': 'root',
-        'PASSWORD': 'Abc@123',
-        # 'PASSWORD': 'Admin@123',
+        # 'PASSWORD': 'Abc@123',
+        'PASSWORD': 'Admin@123',
         'HOST': ''
     }
 }
@@ -233,7 +245,7 @@ MOMO_PARTNER_CODE = 'MOMO'
 MOMO_ACCESS_KEY = 'F8BBA842ECF85'
 MOMO_SECRET_KEY = 'K951B6PE1waDMi640xX08PD3vg6EkVlz'
 
-DOMAIN = "http://localhost:8000"
+DOMAIN = "http://172.16.112.101:8000"
 
 
 # CLIENT_ID = "ULECp6fQAOnJYAd048LPqoMC7TRgv5LRYOQXusBY"

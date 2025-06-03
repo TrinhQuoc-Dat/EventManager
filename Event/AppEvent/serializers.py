@@ -34,15 +34,11 @@ class UserSerializer(ModelSerializer):
                 'write_only': True
             }
         }
-    def validate_avatar(self, value):
-        if value and not str(value).startswith("http"):
-            raise serializers.ValidationError("Avatar phải là đường dẫn URL hợp lệ của Cloudinary.")
-        return value
 
-    # def to_representation(self, instance):
-    #     data = super().to_representation(instance)
-    #     data['avatar'] = instance.avatar.url if instance.avatar else ''
-    #     return data
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        data['avatar'] = instance.avatar.url if instance.avatar else ''
+        return data
 
     def create(self, validated_data):
         data = validated_data.copy()

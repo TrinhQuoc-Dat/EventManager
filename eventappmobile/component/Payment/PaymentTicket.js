@@ -1,9 +1,10 @@
-import { Alert, View } from "react-native";
+
+import { Alert, Linking, View } from "react-native";
 import { Button, Text, TextInput, Title } from "react-native-paper";
-import { authApis, endpoints } from "../../configs/Apis";
+import { authApis, BASE_URL, endpoints } from "../../configs/Apis";
 import { useRoute, useNavigation } from '@react-navigation/native';
 import styles from "./styles";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { navigate } from "../../service/NavigationService";
@@ -16,6 +17,38 @@ const PaymentTicket = () => {
     const [transId,] = useState('');
     const [orderId,] = useState('');
     const [discountCode, setDiscountCode] = useState('');
+
+    useEffect(() => {
+        const handleUrl = (event) => {
+            const openedAt = Date.now();
+            const url = event.url;
+            const params = new URLSearchParams(url.split('?')[1]);
+            const resultCode = params.get('resultCode');
+            const message = params.get('message') || '';
+
+            const now = Date.now();
+            const delay = now - openedAt;
+            if (delay > 1000)
+                if (resultCode === '0') {
+                    handlePayment();
+                    navigate('tabs', { screen: 'paymentHistory' });
+                } else {
+                    Alert.alert('❌ Thất bại', message || 'Thanh toán MoMo thất bại');
+                }
+        };
+
+        // Đăng ký sự kiện mở app qua URL (deep link)
+        const listener = Linking.addEventListener('url', handleUrl);
+
+        // Trường hợp app mở từ đầu bằng deeplink
+        Linking.getInitialURL().then((url) => {
+            if (url) handleUrl({ url });
+        });
+
+        return () => {
+            listener.remove();
+        };
+    }, []);
 
     const handlePayment = async () => {
         try {
@@ -45,7 +78,34 @@ const PaymentTicket = () => {
     };
 
 
-    const handlePaymentMOMO = () => {
+    const handlePaymentMOMO = async () => {
+        try {
+            const token = await AsyncStorage.getItem("token");
+            console.log(`${BASE_URL}api/payment-ticket/payment/momo/`);
+
+            const formData = new FormData();
+            formData.append("amount", parseInt(ticket.ticket_price));
+            formData.append("ticket_id", ticket.id);
+
+            const response = await fetch(`${BASE_URL}api/payment-ticket/payment/momo/`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+            });
+            const data = await response.json();
+
+            if (data && data.payUrl) {
+                Linking.openURL(data.payUrl);
+
+            } else {
+                Alert.alert('Lỗi', 'Không lấy được liên kết thanh toán');
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Lỗi', 'Không thể thực hiện thanh toán');
+        }
 
     }
 

@@ -3,6 +3,9 @@ from django.utils import timezone
 from datetime import timedelta, datetime
 from .models import Event, PaymentTicket, Notification, StatusTicket, StatusNotification, EventDate
 from .utils import send_push_notification
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
 
 @shared_task
 def send_event_reminders():
@@ -65,3 +68,14 @@ def send_event_update_notification(event_id):
                 )
     except Event.DoesNotExist:
         print(f"Event with id {event_id} does not exist or is not active.")
+
+
+def send_noti():
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "user_1",  # user ID group
+        {
+            "type": "send_notification",
+            "message": {"title": "Sự kiện mới", "content": "Bạn có sự kiện mới"},
+        }
+    )

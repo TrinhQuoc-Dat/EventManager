@@ -73,17 +73,9 @@ class CategoryViewSet(
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = dao.get_user()
-    # serializer_class = serializers.UserSerializer
+    serializer_class = serializers.UserSerializer
     parser_classes = [parsers.MultiPartParser]
     permission_classes = [permissions.AllowAny]
-
-    def perform_create(self, serializer):
-        avatar_file = self.request.FILES.get('avatar')
-        if avatar_file:
-            upload_result = cloudinary.uploader.upload(avatar_file)
-            serializer.save(avatar=upload_result['secure_url'])  # lưu URL vào CloudinaryField
-        else:
-            serializer.save()
 
     @action(methods=['post'], url_path='fcm-token', detail=False)
 
@@ -581,7 +573,8 @@ class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
     @action(methods=["post"], url_path="payment/momo", detail=False)
     def momo_payment_view(self, request):
         order_info = "Thanh toán sự kiện"
-        redirect_url = settings.DOMAIN + "/ticket/payment-success/"
+        # redirect_url = settings.DOMAIN + "/ticket/payment-success/"
+        redirect_url = "exp://172.16.112.104:8081"
         ipn_url = settings.DOMAIN + "/ticket/payment-ipn/"
 
         discount_code = request.data.get("discount_code")
@@ -613,7 +606,14 @@ class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):
                 redirect_url=redirect_url,
                 ipn_url=ipn_url,
             )
-            return redirect(result["payUrl"])
+
+            pay_url = result.get("payUrl")
+            if not pay_url:
+                return Response(
+                    {"error": "MoMo không trả về đường dẫn thanh toán", "momo_response": result},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            return Response({"payUrl": pay_url})
 
         except TicketType.DoesNotExist:
             return Response(
@@ -767,13 +767,15 @@ class MomoPaymentIPNView(APIView):
                     transaction_id=data.get("transId"),
                     momo_order_id=data.get("orderId"),
                     status="success",
-                    content="Thanh toán " + ticket.content,
+                    content="Thanh toán " + ticket.name,
                 )
 
-                # Tạo PaymentTicket
                 payment_ticket = PaymentTicket.objects.create(
-                    status="booked", user=user, ticket=ticket, payment=payment
+                    status="booked", user=user, ticket=ticket, payment=payment, qr_code=random()
                 )
+
+                payment_ticket.qr_code = str(uuid.uuid4())
+                payment_ticket.save()
 
                 return Response(
                     {"message": "Payment recorded"}, status=status.HTTP_201_CREATED

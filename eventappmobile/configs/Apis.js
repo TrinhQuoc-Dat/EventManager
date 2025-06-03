@@ -3,8 +3,9 @@ import axios from "axios";
 // const BASE_URL = 'https://trinhquocdat.pythonanywhere.com/';
 
 
-// const BASE_URL = "http://172.16.112.104:8000/"
-const BASE_URL = "http://192.168.1.9:8000/"
+export const BASE_URL = "http://172.16.112.104:8000/"
+// const BASE_URL = "http://192.168.1.12:8000/"
+
 
 export const endpoints = {
     'login': '/api/user/login/',

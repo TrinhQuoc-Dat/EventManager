@@ -354,7 +354,11 @@ const EventDetail = ({ route }) => {
         ) : (
           <TouchableOpacity
             style={{ padding: theme.spacing.large, alignItems: "center" }}
-            onPress={() => navigate("contact-list", { eventId: event.id })}
+            // onPress={() => navigate("contact-list", { eventId: event.id })}
+            onPress={() => navigate("profile", {
+              screen: "contact-list",
+              params: { eventId: 2 },
+            })}
           >
             <Text
               style={{

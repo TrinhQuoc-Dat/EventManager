@@ -25,6 +25,7 @@ import UserEvents from "./component/Event/UserEvents";
 import Chat from "./component/Chats/Chat";
 import TicketedEvents from "./component/Event/TicketedEvents";
 import ContactList from "./component/Chats/ContactList";
+import PaymentMomo from "./component/Payment/PaymentMomo";
 import MapEvents from "./component/Event/MapEvents";
 import EventStats from "./component/Event/EventStats";
 
@@ -44,10 +45,10 @@ const TabNavigator = () => {
       ) : (
         <>
           <Tab.Screen name="home" component={HometNavigator} options={{ headerShown: false ,title: "Trang chủ", tabBarIcon: ({ color, size }) => <MaterialIcons name="home" color={color} size={size} /> }} />
-          <Tab.Screen name="events" component={Events} options={{ title: "Sự kiện", tabBarIcon: ({ color, size }) => <MaterialIcons name="event" color={color} size={size} /> }} />
+          {/* <Tab.Screen name="events" component={Events} options={{ title: "Sự kiện", tabBarIcon: ({ color, size }) => <MaterialIcons name="event" color={color} size={size} /> }} /> */}
           {/* <Tab.Screen name="eventdetail" component={EventDetail} options={{ title: "Chi tiết", tabBarIcon: ({ color, size }) => <MaterialIcons name="info" color={color} size={size} /> }} /> */}
 
-          <Tab.Screen name="paymentHistory" component={PaymentHistory} options={{ title: "Thanh toán", tabBarIcon: ({ color, size }) => <MaterialIcons name="payment" color={color} size={size} /> }} />
+          <Tab.Screen name="paymentHistory" component={PaymentHistory} options={{ title: "Vé thanh toán", tabBarIcon: ({ color, size }) => <MaterialIcons name="payment" color={color} size={size} /> }} />
           {user.role === 'organizer' && (
             <>
               <Tab.Screen name="createvent" component={CreateEventNavigator} options={{ title: "Tạo sự kiện", tabBarIcon: ({ color, size }) => <MaterialIcons name="add-circle-outline" color={color} size={size} /> }} />
@@ -116,6 +117,9 @@ const MainStack = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="tabs" component={TabNavigator} />
       <Stack.Screen name="paymentTicket" component={PaymentTicket} />
+      <Stack.Screen name="Paymentmomo" component={PaymentMomo} />
+      <Stack.Screen name="eventdetail" component={EventDetail} />
+
     </Stack.Navigator>
   );
 };

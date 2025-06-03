@@ -5,12 +5,11 @@ export default {
     "name": "eventappmobile",
     "slug": "eventappmobile",
     "version": "1.0.0",
-    "owner": "trinhquocdat",
+    "owner": "quocdattrinh",
+    "scheme": "eventapp",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "scheme": "eventapp",
     "plugins": [
       [
         "expo-camera",
@@ -20,7 +19,13 @@ export default {
           "recordAudioAndroid": true
         }
       ],
-      "expo-barcode-scanner"
+      "expo-barcode-scanner",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.708848403876-p3cm23cc6f8mjen9hnaro8gb7121j24s"
+        }
+      ]
     ],
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -28,14 +33,22 @@ export default {
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.quocdattrinh.eventappmobile",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.eventappmobile"
+      "package": "com.quocdattrinh.eventappmobile",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

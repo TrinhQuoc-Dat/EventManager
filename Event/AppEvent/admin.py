@@ -6,7 +6,7 @@ from django.utils.safestring import mark_safe
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 from django import forms
 from django.urls import path
-from AppEvent.models import Category, User, Event, Like, Notification, Comment, Ticket, PaymentTicket, Payment, TicketType
+from AppEvent.models import Category, User, Event, Like, Notification, Comment, Ticket, PaymentTicket, Payment, TicketType, EventDate
 from AppEvent import dao
 from django.utils.html import format_html
 
@@ -95,6 +95,7 @@ admin_site.register(Comment)
 admin_site.register(Like)
 admin_site.register(Notification)
 admin_site.register(TicketType)
+admin_site.register(EventDate)
 
 admin_site.register(Group, GroupAdmin)
 admin_site.register(User)
