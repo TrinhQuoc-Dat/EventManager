@@ -126,6 +126,9 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
         password = request.data.get("password")
         expected_role = request.data.get("role")
 
+        if not username or not password or not expected_role:
+            return Response({"error": "Vui lòng nhập đầy đủ username, password và role"}, status=400)
+
         user = authenticate(username=username, password=password)
         if user is not None:
             if user.role != expected_role:

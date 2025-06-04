@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from django.contrib.auth.models import BaseUserManager
 import uuid
+from django.core.exceptions import ValidationError
 
 
 class UserRole(models.TextChoices):
@@ -63,7 +64,7 @@ class BaseModel(models.Model):
     updated_date = models.DateTimeField(auto_now=True)
 
     class Meta:
-        abstract = True,
+        abstract = True
         ordering = ['-id']
 
 
@@ -91,6 +92,7 @@ class Event(BaseModel):
     def __str__(self):
         return self.title
 
+
 class EventDate(BaseModel):
     event = models.ForeignKey(Event, null=False, on_delete=models.CASCADE, related_name='event_dates')
     event_date = models.DateField(null=False)  # Ngày cụ thể của sự kiện
@@ -103,6 +105,10 @@ class EventDate(BaseModel):
 
     def __str__(self):
         return f"{self.event.title} - {self.event_date}"
+
+    def clean(self):
+        if self.start_time >= self.end_time:
+            raise ValidationError("Start time must be before end time")
 
 
 class Interaction(BaseModel):
@@ -156,11 +162,12 @@ class StatusTicket(models.TextChoices):
 class TicketType(BaseModel):
     name = models.CharField(max_length=50, null=False)
     ticket_price = models.DecimalField(default=0, null=False, max_digits=10, decimal_places=2)
-    so_luong = models.IntegerField(null=False, default=0)
+    so_luong = models.IntegerField(null=False, default=0, validators=[MinValueValidator(0)])
     event_date = models.ForeignKey(EventDate, null=False, on_delete=models.RESTRICT, related_name='ticket_types')
 
     def __str__(self):
         return f"{self.name} ({self.event_date})"
+
 
 class Ticket(BaseModel):
     content = models.CharField(max_length=255, null=False)
@@ -203,7 +210,7 @@ class Payment(BaseModel):
 
 
 class PaymentTicket(BaseModel):
-    qr_code = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    qr_code = models.CharField(max_length=64, unique=True, default=lambda: str(uuid.uuid4()))
     status = models.CharField(max_length=20, null=False, default=StatusTicket.BOOKED)
     user = models.ForeignKey(User, null=False, on_delete=models.RESTRICT)
     ticket = models.ForeignKey(TicketType, null=False, on_delete=models.RESTRICT)
@@ -212,6 +219,7 @@ class PaymentTicket(BaseModel):
 
     class Meta:
         unique_together = ('user', 'ticket', 'payment')
+
 
 class DiscountCode(BaseModel):
     code = models.CharField(max_length=20, unique=True)

@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import { useState } from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native"
+import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from "react-native"
 import { Button, HelperText, Menu, TextInput } from "react-native-paper";
 import MyStyles from "../../styles/MyStyles";
 import * as ImagePicker from 'expo-image-picker';
@@ -129,8 +129,15 @@ const Resgister = () => {
                 if (res.status === 201)
                     nav.navigate('login');
 
-            } catch (ex) {
-                console.error(ex);
+            } catch (err) {
+                if (err.response && err.response.status === 400) {
+                    const errors = err.response.data;
+                    for (let key in errors) {
+                        Alert.alert(`${key}: ${errors[key][0]}`);
+                    }
+                } else {
+                    Alert.alert("Có lỗi xảy ra, vui lòng thử lại sau.");
+                }
                 setMsg("Lỗi khi đăng ký!");
             } finally {
                 setLoading(false);

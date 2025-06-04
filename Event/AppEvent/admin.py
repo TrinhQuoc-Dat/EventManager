@@ -6,7 +6,7 @@ from django.utils.safestring import mark_safe
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 from django import forms
 from django.urls import path
-from AppEvent.models import Category, User, Event, Like, Notification, Comment, Ticket, PaymentTicket, Payment, TicketType, EventDate
+from AppEvent.models import Category, User, Event, Like, Notification, Comment, PaymentTicket, Payment, TicketType, EventDate, DiscountCode
 from AppEvent import dao
 from django.utils.html import format_html
 
@@ -83,6 +83,20 @@ class EventAdmin(admin.ModelAdmin):
         }
 
 
+class UserAdmin(admin.ModelAdmin):
+    class Media:
+        model = User
+        fields = '__all__'
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if self.cleaned_data.get('password'):
+            user.set_password(self.cleaned_data['password'])
+        if commit:
+            user.save()
+        return user
+
+
 admin_site = EventAppAdminSite(name='Admin Site')
 
 
@@ -90,12 +104,14 @@ admin_site.register(Category)
 admin_site.register(Event, EventAdmin)
 admin_site.register(Payment)
 admin_site.register(PaymentTicket)
-admin_site.register(Ticket)
+# admin_site.register(Ticket)
 admin_site.register(Comment)
 admin_site.register(Like)
 admin_site.register(Notification)
 admin_site.register(TicketType)
 admin_site.register(EventDate)
+admin_site.register(DiscountCode)
 
 admin_site.register(Group, GroupAdmin)
-admin_site.register(User)
+admin_site.register(User, UserAdmin)
+
