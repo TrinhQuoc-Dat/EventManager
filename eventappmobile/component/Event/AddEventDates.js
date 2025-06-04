@@ -51,8 +51,8 @@ const AddEventDates = ({ route, navigation }) => {
       const dateData = response.data;
       setNewDate({
         event_date: new Date(dateData.event_date),
-        start_time: new Date(`1970-01-01T${dateData.start_time}`),
-        end_time: new Date(`1970-01-01T${dateData.end_time}`),
+        start_time: new Date(`1970-01-01T${dateData.start_time}`), // giữ nguyên
+        end_time: new Date(`1970-01-01T${dateData.end_time}`), // giữ nguyên
       });
     } catch (error) {
       console.error("Lỗi khi tải ngày sự kiện:", error);

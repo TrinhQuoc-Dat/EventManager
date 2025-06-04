@@ -57,7 +57,7 @@ const UserEvents = () => {
       }
     }
   };
-  console.log(events);
+  // console.log(events);
   const loadMore = () => {
     if (!loading && page > 0) {
       setPage((page) => page + 1);
