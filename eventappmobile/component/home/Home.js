@@ -10,7 +10,7 @@ import {
   ScrollView,
   Dimensions,
 } from "react-native";
-import Apis, { endpoints } from "../../configs/Apis";
+import Apis, { authApis, BASE_URL, endpoints } from "../../configs/Apis";
 import { SafeAreaView } from "react-native";
 import { Chip, Card, Searchbar } from "react-native-paper";
 import MyStyles from "../../styles/MyStyles";
@@ -30,6 +30,7 @@ const Home = () => {
   const [page, setPage] = useState(1);
   const [cateId, setCateId] = useState(null);
   const [hasMore, setHasMore] = useState(true);
+  const [suggestions, setSuggestions] = useState([]);
 
   const loadCates = async () => {
     try {
@@ -47,8 +48,8 @@ const Home = () => {
       setLoading(true);
       let url = `${endpoints["events"]}?page=${page}`;
 
-      if (q) {
-        url = `${url}&q=${q}`;
+      if (typeof q === "string" && q.trim() !== "") {
+        url += `&q=${encodeURIComponent(q.trim())}`;
       }
 
       if (cateId) {
@@ -56,16 +57,16 @@ const Home = () => {
       }
 
       let res = await Apis.get(url);
-
-      if (res.data.results.length === 0 || res.data.next === null) {
+      if (res.data.link.next === null) {
         setHasMore(false);
         setPage(0);
-      } else {
-        setEvents((prevEvents) => [...prevEvents, ...res.data.results]);
       }
+      setEvents((prevEvents) => [...prevEvents, ...res.data.results]);
+      
     } catch (ex) {
       console.error("Error loading events:", ex);
       if (ex.response && ex.response.status === 404) {
+        setEvents([]); 
         setHasMore(false);
         setPage(0);
       }
@@ -80,11 +81,26 @@ const Home = () => {
     }
   };
 
+  const fetchSuggestion = async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/event/suggestion/?kw=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      setSuggestions(data.suggestion || []);
+    } catch (error) {
+      console.error('Lỗi khi lấy gợi ý:', error);
+    }
+  }
+
+
   const search = (value, callback) => {
     setPage(1);
     setEvents([]);
     setHasMore(true);
     callback(value);
+
+    if (typeof q === "string" || value === "") {
+      setSuggestions([]);
+    }
   };
 
   useEffect(() => {
@@ -93,7 +109,14 @@ const Home = () => {
 
   useEffect(() => {
     let timer = setTimeout(() => {
+     if ((typeof q !== "string") || q === "" || page > 0) {
       loadEvents();
+    }
+      if (typeof q === "string" && q.trim() !== "") {
+        fetchSuggestion();
+      } else {
+        setSuggestions([]);
+      }
     }, 500);
 
     return () => clearTimeout(timer);
@@ -144,6 +167,16 @@ const Home = () => {
         inputStyle={styles.searchbarInput} // Thêm style cho input bên trong
         iconColor="#666" // Tùy chỉnh màu icon
       />
+      {suggestions.length > 0 && (
+        <FlatList
+          data={suggestions}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity key={item.id} style={styles.suggestionItem} onPress={() => navigate("eventdetail2", { eventId: item.id })}>
+              <Text style={styles.title}>{item.title}</Text>
+            </TouchableOpacity>
+          )}
+        />)}
 
       <FlatList
         style={styles.flatList}
@@ -252,6 +285,18 @@ const styles = StyleSheet.create({
     color: "red",
     fontSize: 10,
     marginTop: 4,
+  },
+  suggestionItem: {
+    backgroundColor: '#fff',
+    marginHorizontal: 8,
+    marginVertical: 4,
+    padding: 8,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2, // cho Android
   },
 });
 

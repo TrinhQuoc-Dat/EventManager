@@ -44,6 +44,7 @@ import cloudinary
 from django.utils import timezone
 from .tasks import send_event_update_notification
 from datetime import datetime
+from AppEvent import AI
 
 
 class CategoryViewSet(
@@ -226,6 +227,13 @@ class EventViewSet(
     queryset = dao.get_events()
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
     pagination_class = paginations.EventSetPagination
+
+    @action(methods=["get"], detail=False, url_path="suggestion")
+    def get_suggestion(self, request):
+        kw = request.query_params.get("kw")
+        suggestion = AI.get_event_embeddings(query=kw)
+        print(suggestion)
+        return Response({"suggestion": suggestion})
 
     def get_queryset(self):
         query = self.queryset
@@ -504,6 +512,7 @@ class EventViewSet(
         serializer = serializers.EventStatsSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class TicketViewSet(
