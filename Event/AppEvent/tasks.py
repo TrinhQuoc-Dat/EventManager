@@ -60,12 +60,12 @@ def send_event_update_notification(event_id):
                 send_push_notification(user.fcm_token, title, body)
 
                 # Lưu thông báo vào database
-                Notification.objects.create(
-                    user=user,
-                    event=event,
-                    content=body,
-                    status=StatusNotification.NO_READ
-                )
+                # Notification.objects.create(
+                #     user=user,
+                #     event=event,
+                #     content=body,
+                #     status=StatusNotification.NO_READ
+                # )
     except Event.DoesNotExist:
         print(f"Event with id {event_id} does not exist or is not active.")
 

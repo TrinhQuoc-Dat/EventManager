@@ -42,9 +42,12 @@ from rest_framework.permissions import IsAuthenticated
 import uuid
 import cloudinary
 from django.utils import timezone
-from .tasks import send_event_update_notification
+# from .tasks import send_event_update_notification
 from datetime import datetime
 from AppEvent import AI
+import logging
+from .utils import send_push_notification
+logger = logging.getLogger(__name__)
 
 
 class CategoryViewSet(
@@ -75,20 +78,27 @@ class CategoryViewSet(
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView):
     queryset = dao.get_user()
     serializer_class = serializers.UserSerializer
-    parser_classes = [parsers.MultiPartParser]
+    parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
     permission_classes = [permissions.AllowAny]
 
+    
     @action(methods=['post'], url_path='fcm-token', detail=False)
-
     def save_fcm_token(self, request):
         user = request.user
-        serializer = serializers.UserFCMTokenSerializer(
-            user, data={"fcm_token": request.data.get("fcm_token")}, partial=True
-        )
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "FCM token saved"}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        if not user or user.is_anonymous:
+            return Response({"error": "Bạn cần đăng nhập để lưu FCM token."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        token = request.data.get("fcm_token")
+        if not token:
+            return Response({"error": "Thiếu fcm_token"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Nếu token là list, lấy phần tử đầu tiên
+        if isinstance(token, list):
+            token = token[0]
+
+        user.fcm_token = token
+        user.save(update_fields=["fcm_token"])
+        return Response({"message": "FCM token saved", "fcm_token": user.fcm_token}, status=status.HTTP_200_OK)
 
     @action(
         methods=["get"],
@@ -376,7 +386,7 @@ class EventViewSet(
         with transaction.atomic():
             serializer = self.get_serializer(instance, data=data, partial=partial)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+            updated_event = serializer.save()
             if event_dates:
                 instance.event_dates.all().delete()
                 for date_data in event_dates:
@@ -386,6 +396,27 @@ class EventViewSet(
                         start_time=date_data["start_time"],
                         end_time=date_data["end_time"],
                     )
+            # Send notification to users who purchased tickets
+            try:
+                payment_tickets = PaymentTicket.objects.filter(
+                    ticket__event_date__event=instance,
+                    payment__status=StatusPayment.SUCCESS
+                ).select_related('user')
+                users = {pt.user for pt in payment_tickets if pt.user.fcm_token}
+                fcm_tokens = [user.fcm_token for user in users if user.fcm_token]
+                if fcm_tokens:
+                    notification_content = (
+                        f"Sự kiện '{instance.title}' đã được cập nhật! "
+                        f"Tiêu đề: {data.get('title', instance.title)}, "
+                        f"Địa điểm: {data.get('location', instance.location)}, "
+                        f"Tên địa điểm: {data.get('location_name', instance.location_name)}"
+                    )
+                    send_push_notification(fcm_tokens, "Cập nhật sự kiện", notification_content)
+                    logger.info(f"Sent update notification for event {instance.id} to {len(fcm_tokens)} users")
+                else:
+                    logger.warning(f"No FCM tokens found for event {instance.id} update")
+            except Exception as e:
+                logger.error(f"Error sending notification for event {instance.id}: {str(e)}")
             return Response(serializer.data)
 
     @action(methods=["post", "get"], detail=True, url_path="add-date")
@@ -395,6 +426,27 @@ class EventViewSet(
             serializer = serializers.EventDateSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save(event=event)
+                # Send notification to users who purchased tickets
+                try:
+                    payment_tickets = PaymentTicket.objects.filter(
+                        ticket__event_date__event=event,
+                        payment__status=StatusPayment.SUCCESS
+                    ).select_related('user')
+                    users = {pt.user for pt in payment_tickets if pt.user.fcm_token}
+                    fcm_tokens = [user.fcm_token for user in users if user.fcm_token]
+                    if fcm_tokens:
+                        notification_content = (
+                            f"Sự kiện '{event.title}' đã thêm ngày mới! "
+                            f"Ngày: {request.data.get('event_date')}, "
+                            f"Bắt đầu: {request.data.get('start_time')}, "
+                            f"Kết thúc: {request.data.get('end_time')}"
+                        )
+                        send_push_notification(fcm_tokens, "Cập nhật sự kiện", notification_content)
+                        logger.info(f"Sent date update notification for event {event.id} to {len(fcm_tokens)} users")
+                    else:
+                        logger.warning(f"No FCM tokens found for event date update of event {event.id}")
+                except Exception as e:
+                    logger.error(f"Error sending date notification for event {event.id}: {str(e)}")
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
@@ -425,6 +477,27 @@ class EventViewSet(
         )
         if serializer.is_valid():
             serializer.save()
+            # Send notification to users who purchased tickets
+            try:
+                payment_tickets = PaymentTicket.objects.filter(
+                    ticket__event_date__event=event,
+                    payment__status=StatusPayment.SUCCESS
+                ).select_related('user')
+                users = {pt.user for pt in payment_tickets if pt.user.fcm_token}
+                fcm_tokens = [user.fcm_token for user in users if user.fcm_token]
+                if fcm_tokens:
+                    notification_content = (
+                        f"Sự kiện '{event.title}' đã thêm loại vé mới! "
+                        f"Tên: {request.data.get('name')}, "
+                        f"Giá: {request.data.get('ticket_price')}, "
+                        f"Số lượng: {request.data.get('so_luong')}"
+                    )
+                    send_push_notification(fcm_tokens, "Cập nhật sự kiện", notification_content)
+                    logger.info(f"Sent ticket type notification for event {event.id} to {len(fcm_tokens)} users")
+                else:
+                    logger.warning(f"No FCM tokens found for ticket type update of event {event.id}")
+            except Exception as e:
+                logger.error(f"Error sending ticket type notification for event {event.id}: {str(e)}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -474,15 +547,12 @@ class EventViewSet(
     @action(methods=["get"], detail=True, url_path="stats")
     def get_event_stats(self, request, pk):
         event = self.get_object()
-        # Tính số lượng vé bán ra
         payment_tickets = PaymentTicket.objects.filter(
             ticket__event_date__event=event,
             payment__status=StatusPayment.SUCCESS
         )
         total_tickets_sold = payment_tickets.count()
-        # Tính doanh thu
         total_revenue = sum(pt.payment.amount for pt in payment_tickets)
-        # Thống kê theo loại vé
         ticket_types_stats = []
         ticket_types = TicketType.objects.filter(event_date__event=event, active=True)
         for ticket_type in ticket_types:
@@ -557,7 +627,7 @@ class EventDateViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.request.method.__eq__("GET"):
             return [permissions.AllowAny()]
-        return [perms.IsOwnerOrganizer]
+        return [perms.IsOwnerOrganizer()]
 
     def get_serializer_class(self):
         if self.action in ["get_ticket_types"]:
@@ -571,6 +641,37 @@ class EventDateViewSet(viewsets.ModelViewSet):
             serializers.TicketTypeSerializer(u, many=True).data,
             status=status.HTTP_200_OK,
         )
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=kwargs.get('partial', False))
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        # Gửi thông báo cho user đã mua vé của sự kiện này
+        try:
+            event = instance.event
+            payment_tickets = PaymentTicket.objects.filter(
+                ticket__event_date=instance,
+                payment__status=StatusPayment.SUCCESS
+            ).select_related('user')
+            users = {pt.user for pt in payment_tickets if pt.user.fcm_token}
+            fcm_tokens = [user.fcm_token for user in users if user.fcm_token]
+            if fcm_tokens:
+                notification_content = (
+                    f"Sự kiện '{event.title}' đã cập nhật ngày diễn ra!\n"
+                    f"Ngày: {serializer.data.get('event_date', instance.event_date)}, "
+                    f"Bắt đầu: {serializer.data.get('start_time', instance.start_time)}, "
+                    f"Kết thúc: {serializer.data.get('end_time', instance.end_time)}"
+                )
+                send_push_notification(fcm_tokens, "Cập nhật ngày sự kiện", notification_content)
+                logger.info(f"Sent event date update notification for event {event.id} to {len(fcm_tokens)} users")
+            else:
+                logger.warning(f"No FCM tokens found for event date update of event {event.id}")
+        except Exception as e:
+            logger.error(f"Error sending event date update notification for event {event.id}: {str(e)}")
+
+        return Response(serializer.data)
 
 
 class PaymentTicketViewSet(viewsets.ViewSet, generics.RetrieveAPIView):

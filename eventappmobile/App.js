@@ -29,6 +29,7 @@ import PaymentMomo from "./component/Payment/PaymentMomo";
 import MapEvents from "./component/Event/MapEvents";
 import EventStats from "./component/Event/EventStats";
 import EventRoomChat from "./component/Chats/EventRoomChat";
+import Test from "./component/home/Test";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -59,6 +60,7 @@ const TabNavigator = () => {
             </>)}
           <Tab.Screen name="profile" component={ProfiletNavigator}  options={{ headerShown: false ,title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
           <Tab.Screen name="mapevent" component={MapNavigator}  options={{ headerShown: true ,title: "Vị trí sự kiện", tabBarIcon: () => <Icon size={30} source="map-marker" /> }} />
+          {/* <Tab.Screen name="test" component={Test}  options={{ headerShown: true ,title: "Vị trí sự kiện", tabBarIcon: () => <Icon size={30} source="map-marker" /> }} /> */}
           {/* <Tab.Screen name="chat" component={Chat}  options={{ headerShown: false ,title: "Chat", tabBarIcon: () => <Icon size={30} source="account" /> }} /> */}
         </>
       )}

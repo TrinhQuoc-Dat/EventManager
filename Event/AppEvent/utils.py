@@ -1,19 +1,19 @@
-from firebase_admin import messaging
+# from firebase_admin import messaging
+import requests
 
-
-def send_push_notification(fcm_token, title, body):
-    if not fcm_token:
-        return False
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title=title,
-            body=body,
-        ),
-        token=fcm_token,
-    )
-    try:
-        response = messaging.send(message)
-        return True
-    except Exception as e:
-        print(f"Error sending push notification: {e}")
-        return False
+def send_push_notification(tokens, title, body, data=None):
+    url = "https://exp.host/--/api/v2/push/send"
+    messages = []
+    for token in tokens:
+        messages.append({
+            "to": token,
+            "sound": "default",
+            "title": title,
+            "body": body,
+            "data": data or {},
+        })
+    # Expo API cho phép gửi tối đa 100 notifications/lần
+    response = requests.post(url, json=messages, headers={
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    })
