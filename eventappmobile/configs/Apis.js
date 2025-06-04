@@ -36,6 +36,7 @@ export const endpoints = {
     'ticketed-events': '/api/payment-ticket/user-events/',
     "event-stats": (eventId) => `/api/event/${eventId}/stats/`,
     "discount-codes": `/api/discount-codes/`,
+    "suggestion": `/api/event/suggestion/`
     
 
 };
