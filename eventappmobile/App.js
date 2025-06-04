@@ -25,7 +25,6 @@ import UserEvents from "./component/Event/UserEvents";
 import Chat from "./component/Chats/Chat";
 import TicketedEvents from "./component/Event/TicketedEvents";
 import ContactList from "./component/Chats/ContactList";
-import PaymentMomo from "./component/Payment/PaymentMomo";
 import MapEvents from "./component/Event/MapEvents";
 import EventStats from "./component/Event/EventStats";
 import EventRoomChat from "./component/Chats/EventRoomChat";
@@ -121,7 +120,6 @@ const MainStack = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="tabs" component={TabNavigator} />
       <Stack.Screen name="paymentTicket" component={PaymentTicket} />
-      <Stack.Screen name="Paymentmomo" component={PaymentMomo} />
       <Stack.Screen name="eventdetail" component={EventDetail} />
 
     </Stack.Navigator>

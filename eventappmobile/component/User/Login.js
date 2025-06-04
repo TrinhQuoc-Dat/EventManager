@@ -1,4 +1,4 @@
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native"
+import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from "react-native"
 import { Button, HelperText, Menu, TextInput } from "react-native-paper";
 import { useContext, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
@@ -66,8 +66,15 @@ const Login = () => {
                     "payload": u.data
                 });
 
-            } catch (ex) {
-                console.error(ex);
+            } catch (err) {
+                if (err.response && err.response.status === 400) {
+                    const errors = err.response.data;
+                    for (let key in errors) {
+                        Alert.alert(`${key}: ${errors[key][0]}`);
+                    }
+                } else {
+                    Alert.alert("Có lỗi xảy ra, vui lòng thử lại sau.");
+                }
             } finally {
                 setLoading(false);
             }
@@ -129,16 +136,16 @@ const Login = () => {
 
 
             <Button onPress={login} disabled={loading} loading={loading} style={[MyStyles.m, MyStyles.button]} mode="contained">Đăng nhập</Button>
-            
+
             <View
                 style={{
                     height: 1,
                     backgroundColor: '#ccc',
-                    marginVertical: 10,    
+                    marginVertical: 10,
                 }}
             />
 
-            <GoogleLogin/>
+            <GoogleLogin />
         </ScrollView>
     )
 }

@@ -41,10 +41,6 @@ const PaymentHistory = () => {
   }, [page]);
 
 
-  const handelQrCode = async (payment_id) => {
-
-  }
-
   const openModal = async (payment) => {
     await fetchQRCode(payment.id);
     setSelectedPayment(payment);

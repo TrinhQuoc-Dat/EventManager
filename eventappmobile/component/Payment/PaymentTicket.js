@@ -4,10 +4,11 @@ import { Button, Text, TextInput, Title } from "react-native-paper";
 import { authApis, BASE_URL, endpoints } from "../../configs/Apis";
 import { useRoute, useNavigation } from '@react-navigation/native';
 import styles from "./styles";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { navigate } from "../../service/NavigationService";
+import { MyUserContext } from "../../configs/Context";
 
 const PaymentTicket = () => {
 
@@ -17,6 +18,7 @@ const PaymentTicket = () => {
     const [transId,] = useState('');
     const [orderId,] = useState('');
     const [discountCode, setDiscountCode] = useState('');
+    const user = useContext(MyUserContext);
 
     useEffect(() => {
         const handleUrl = (event) => {
@@ -37,10 +39,8 @@ const PaymentTicket = () => {
                 }
         };
 
-        // Đăng ký sự kiện mở app qua URL (deep link)
         const listener = Linking.addEventListener('url', handleUrl);
 
-        // Trường hợp app mở từ đầu bằng deeplink
         Linking.getInitialURL().then((url) => {
             if (url) handleUrl({ url });
         });
@@ -72,8 +72,15 @@ const PaymentTicket = () => {
                 screen: 'paymentHistory',
             });
         } catch (err) {
+            if (err.response && err.response.status === 400) {
+                const errors = err.response.data;
+                for (let key in errors) {
+                    Alert.alert(`${key}: ${errors[key][0]}`);
+                }
+            } else {
+                Alert.alert('Lỗi', err.response?.data?.error || 'Thanh toán thất bại');
+            }
             console.error(err.response?.data || err.message);
-            Alert.alert('Lỗi', err.response?.data?.error || 'Thanh toán thất bại');
         }
     };
 
@@ -140,15 +147,16 @@ const PaymentTicket = () => {
                         autoCapitalize="characters"
                     />
                 </View>
+                {user && user.role === "ADMIN" && (
+                    <Button
+                        icon="credit-card"
+                        mode="contained"
+                        onPress={handlePayment}
+                        style={styles.buttonPament}
+                    >
+                        Thanh toán
+                    </Button>)}
 
-                <Button
-                    icon="credit-card"
-                    mode="contained"
-                    onPress={handlePayment}
-                    style={styles.buttonPament}
-                >
-                    Thanh toán
-                </Button>
                 <Button
                     icon="account-balance-wallet"
                     mode="contained"
