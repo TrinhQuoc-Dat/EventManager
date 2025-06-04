@@ -27,6 +27,7 @@ import TicketedEvents from "./component/Event/TicketedEvents";
 import ContactList from "./component/Chats/ContactList";
 import MapEvents from "./component/Event/MapEvents";
 import EventStats from "./component/Event/EventStats";
+import EventRoomChat from "./component/Chats/EventRoomChat";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -76,6 +77,7 @@ const ProfiletNavigator = () => {
       <Stack.Screen name='contact-list' component={ContactList} options={{ title: "Tin nhắn", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
       <Stack.Screen name="mapevent2" component={MapEvents}  options={{ headerShown: false ,title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
       <Stack.Screen name="event-stats" component={EventStats}  options={{ headerShown: false ,title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
+      <Stack.Screen name="event-room-chat" component={EventRoomChat}  options={{ headerShown: false ,title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
 
     </Stack.Navigator>
   );
@@ -97,6 +99,8 @@ const HometNavigator = () => {
       <Stack.Screen name='home2' component={Home} options={{ title: "Trang chủ", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
       <Stack.Screen name='eventdetail2' component={EventDetail} options={{ title: "Chi tiết sự kiện", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
       <Stack.Screen name='chat' component={Chat} options={{ title: "Sự kiện đã thanh toán", tabBarIcon: () => <Icon size={30} source="account" /> }}/>
+      <Stack.Screen name="event-room-chat" component={EventRoomChat}  options={{ headerShown: false ,title: "Tài khoản", tabBarIcon: () => <Icon size={30} source="account" /> }} />
+
     </Stack.Navigator>
   );
 }
@@ -141,5 +145,7 @@ const App = () => {
     </MyUserContext.Provider>
   );
 };
+
+
 
 export default App;
