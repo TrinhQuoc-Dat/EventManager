@@ -73,6 +73,7 @@ const Login = () => {
                         Alert.alert(`${key}: ${errors[key][0]}`);
                     }
                 } else {
+                    console.error(err);
                     Alert.alert("Có lỗi xảy ra, vui lòng thử lại sau.");
                 }
             } finally {
