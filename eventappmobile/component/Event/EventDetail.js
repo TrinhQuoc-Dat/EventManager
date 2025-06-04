@@ -21,6 +21,7 @@ import Apis, { authApis, endpoints } from "../../configs/Apis";
 import { navigate } from "../../service/NavigationService";
 import { SafeAreaView } from "react-native-safe-area-context";
 import QRCode from "react-native-qrcode-svg";
+import EventRoomChat from "../Chats/EventRoomChat";
 
 // Theme constants
 const theme = {
@@ -241,6 +242,7 @@ const OrganizerInfo = React.memo(({ organizer }) => (
 const EventDetail = ({ route }) => {
   const user = useContext(MyUserContext);
   const eventId = route.params?.eventId;
+  const [showRoomChat, setShowRoomChat] = useState(false);
   const { event, loading, error, setEvent } = useEvent(eventId);
   const {
     commentContent,
@@ -249,6 +251,7 @@ const EventDetail = ({ route }) => {
     setCommentRate,
     postComment,
   } = usePostComment(eventId, setEvent);
+  const nav = useNavigation();
 
   if (loading || !event) return <ActivityIndicator style={{ marginTop: 32 }} />;
 
@@ -333,32 +336,50 @@ const EventDetail = ({ route }) => {
         </Card>
         <OrganizerInfo organizer={event.organizer} />
         {user.role === "participant" ? (
-          <TouchableOpacity
-            style={{ padding: theme.spacing.large, alignItems: "center" }}
-            onPress={() =>
-              navigate("chat", {
-                organizerEmail: event.organizer.email,
-                eventId: event.id,
-              })
-            }
-          >
-            <Text
-              style={{
-                color: theme.colors.primary,
-                fontSize: theme.fontSizes.large,
-              }}
+          <>
+            <TouchableOpacity
+              style={{ padding: theme.spacing.large, alignItems: "center" }}
+              onPress={() =>
+                navigate("chat", {
+                  organizerEmail: event.organizer.email,
+                  eventId: event.id,
+                })
+              }
             >
-              Liên hệ với nhà tổ chức
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={{
+                  color: theme.colors.primary,
+                  fontSize: theme.fontSizes.large,
+                }}
+              >
+                Liên hệ với nhà tổ chức
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ padding: theme.spacing.large, alignItems: "center" }}
+              onPress={() => nav.navigate("event-room-chat", { eventId: event.id, eventDates: event.event_dates })}
+            >
+              <Text
+                style={{
+                  color: theme.colors.primary,
+                  fontSize: theme.fontSizes.large,
+                }}
+              >
+                Thảo luận
+              </Text>
+            </TouchableOpacity>
+            
+          </>
         ) : (
           <TouchableOpacity
             style={{ padding: theme.spacing.large, alignItems: "center" }}
             // onPress={() => navigate("contact-list", { eventId: event.id })}
-            onPress={() => navigate("profile", {
-              screen: "contact-list",
-              params: { eventId: 2 },
-            })}
+            onPress={() =>
+              navigate("profile", {
+                screen: "contact-list",
+                params: { eventId: 2 },
+              })
+            }
           >
             <Text
               style={{
